@@ -1,1 +1,1 @@
-# sisyphus-auto-flow
+# SisyphusAutoFlow - 1.0
