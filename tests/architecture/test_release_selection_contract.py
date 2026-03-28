@@ -21,3 +21,5 @@ def test_repository_catalog_defines_fixed_release_choices_and_default() -> None:
     ]
     assert catalog.default_release == "release_6.2.x"
     assert "CustomItem" not in {repo.name for repo in catalog.repositories if repo.include_in_sync}
+    assert all("gitlab.prod.dtstack.cn" in repo.clone_url for repo in catalog.repositories)
+    assert any(repo.local_path == "dt-insight-web/dt-center-assets" for repo in catalog.repositories)

@@ -21,6 +21,7 @@ triggers:
 2. 说明默认 release 是 `release_6.2.x`
 3. 说明小 HAR 与大 HAR / 多场景 HAR 的处理差异
 4. 告诉用户可直接提供 HAR 文件，或先执行源码同步
+5. 提醒参考源码以 GitLab `.repos/` 后端仓库与 `dtstack-httprunner` 环境配置为准
 
 ## 关键命令
 
@@ -33,15 +34,18 @@ triggers:
 
 `parse_har.sh` 会保留用户原始 HAR，并在 `.data/har/` 中使用工作区副本完成解析与回收站清理。
 
+`render_acceptance_summary.sh` 会固定输出验收通知、参考源码、验收命令、定向执行范围与跳过项。
+
 ## 工作流说明
 
 1. 先按 `Install.md` 把本地环境准备好
 2. 选择 release，默认 `release_6.2.x`
 3. 用 `.claude/scripts/sync_release_repos.sh` 同步后端源码
-4. 解析 HAR，再基于 `parsed.json` 生成 workflow manifest
-5. 若为大 HAR / 多场景 HAR，则由 `.claude/agents/` 中的多 agent 合同按模块 / 资源域协同处理
-6. 仅执行当前 HAR 影响到的测试范围
-7. 在终端输出验收清单，不额外生成跟踪文件
+4. 阅读 `.repos/dt-insight-web/*` 后端源码，并结合 `.repos/dt-insight-qa/dtstack-httprunner/api/*` 与环境配置做基线参考
+5. 解析 HAR，再基于 `parsed.json` 生成 workflow manifest
+6. 若为大 HAR / 多场景 HAR，则由 `.claude/agents/` 中的多 agent 合同按模块 / 资源域协同处理
+7. 仅执行当前 HAR 影响到的测试范围
+8. 在终端输出验收清单，不额外生成跟踪文件
 
 ## 下一步如何引导用户
 

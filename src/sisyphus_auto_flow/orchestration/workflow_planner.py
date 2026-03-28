@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from collections import OrderedDict
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from sisyphus_auto_flow.core.models.workflow import (
@@ -12,14 +13,14 @@ from sisyphus_auto_flow.core.models.workflow import (
     WorkflowScenarioGroup,
     WorkflowWriterTask,
 )
+from sisyphus_auto_flow.parsers.source_analyzer import collect_reference_sources
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from sisyphus_auto_flow.core.models.har import NormalizedHarResult
 
 DEFAULT_MULTI_AGENT_REQUEST_THRESHOLD = 8
 DEFAULT_PARALLEL_WRITER_LIMIT = 3
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 def _group_requests_by_module(parsed: NormalizedHarResult) -> OrderedDict[str, list]:
@@ -56,6 +57,16 @@ def _group_requests_for_workflow(
         resource_area = module if workflow_mode == "single_agent" else _derive_resource_area(request.path)
         grouped.setdefault((module, resource_area), []).append(request)
     return grouped
+
+
+def _build_validation_commands(*, source_har: str, targeted_tests: list[str]) -> list[str]:
+    """Build explicit, copy-paste friendly validation commands for terminal acceptance."""
+    workflow_stem = Path(source_har).stem
+    targeted_command = " ".join(targeted_tests) if targeted_tests else "tests/"
+    return [
+        f"uv run pytest {targeted_command} -v --alluredir=allure-results",
+        f"bash .claude/scripts/render_acceptance_summary.sh .data/parsed/{workflow_stem}.workflow.json",
+    ]
 
 
 def plan_har_workflow(
@@ -116,12 +127,21 @@ def plan_har_workflow(
     if workflow_mode == "single_agent":
         writer_tasks = []
 
+    targeted_tests = sorted({group.target_test_path for group in scenario_groups})
+    planned_modules = {group.module for group in scenario_groups if group.module != "unmapped"}
+    reference_sources = collect_reference_sources(repo_root=REPO_ROOT, modules=planned_modules)
+    validation_commands = _build_validation_commands(source_har=parsed.source, targeted_tests=targeted_tests)
+    acceptance_notice = f"请按下列命令完成验收，并优先参考 {release} 基线下的后端源码与 dtstack-httprunner 环境配置。"
+
     return HarWorkflowManifest(
         source_har=parsed.source,
         release=release,
         workflow_mode=workflow_mode,
+        acceptance_notice=acceptance_notice,
         scenario_groups=scenario_groups,
-        targeted_tests=sorted({group.target_test_path for group in scenario_groups}),
+        targeted_tests=targeted_tests,
+        reference_sources=reference_sources,
+        validation_commands=validation_commands,
         writer_tasks=writer_tasks,
         impacted_areas=impacted_areas,
         har_scenarios=[group.name for group in scenario_groups],

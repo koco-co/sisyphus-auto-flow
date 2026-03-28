@@ -84,9 +84,11 @@ sisyphus-auto-flow/
 .claude/scripts/sync_release_repos.sh <release>
 ```
 
-- 只同步后端源码仓库
+- 使用 `config/repositories.yaml` 中定义的 GitLab nested 仓库映射
+- 当前标准同步目标包含 `dt-center-assets`、`dt-center-metadata`、`datasourcex`、`dt-public-service`、`engine-plugins`
 - 前端源码不作为接口自动化参考
 - `.repos/CustomItem` 不纳入标准工作流
+- `.repos/dt-insight-qa/dtstack-httprunner` 默认作为接口与环境基线参考，不纳入标准同步
 
 ### Step 1: 解析 HAR 并生成 workflow manifest
 
@@ -115,6 +117,13 @@ sisyphus-auto-flow/
 - 找到对应的接口处理器（Controller/Handler）
 - 理解请求/响应模型、数据库模型
 - 识别核心业务逻辑和校验规则
+
+参考源码优先级：
+
+1. `.repos/dt-insight-web/<module-repo>` 等后端服务源码
+2. `.repos/dt-insight-qa/dtstack-httprunner/api/<module>/*_api.py` 中的真实接口注册
+3. `.repos/dt-insight-qa/dtstack-httprunner/config/configs.py`
+4. `.repos/dt-insight-qa/dtstack-httprunner/config/env_config.py`
 
 ### Step 4: 交互式场景确认
 向用户展示分析结果并等待确认：
@@ -149,10 +158,13 @@ uv run pytest tests/<module>/ -v --alluredir=allure-results
 
 在命令行中输出验收清单，包含：
 
+- 验收通知
+- 参考源码
 - HAR 给出的场景
 - AI 补充场景
 - 涉及模块 / 菜单 / 功能
 - 代码位置
+- 验收命令
 - 定向执行用例
 - 跳过项 / 不纳入范围
 

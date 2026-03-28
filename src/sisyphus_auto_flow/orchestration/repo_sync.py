@@ -40,17 +40,19 @@ def sync_repositories(
 
     synced_paths: list[Path] = []
     for repo in catalog.sync_targets():
-        repo_path = workspace / repo.name
+        repo_path = workspace / repo.resolve_local_path()
+        release_ref = repo.resolve_release_ref(selected_release)
         synced_paths.append(repo_path)
         if dry_run:
             continue
 
         if not repo_path.exists():
+            repo_path.parent.mkdir(parents=True, exist_ok=True)
             _run_git(
                 [
                     "clone",
                     "--branch",
-                    selected_release,
+                    release_ref,
                     "--single-branch",
                     repo.clone_url,
                     str(repo_path),
@@ -59,16 +61,17 @@ def sync_repositories(
             continue
 
         if not (repo_path / ".git").exists():
-            backup_path = backup_root / repo.name
+            backup_path = backup_root / repo.resolve_local_path()
             backup_path.parent.mkdir(parents=True, exist_ok=True)
             if backup_path.exists():
                 shutil.rmtree(backup_path)
             shutil.move(str(repo_path), str(backup_path))
+            repo_path.parent.mkdir(parents=True, exist_ok=True)
             _run_git(
                 [
                     "clone",
                     "--branch",
-                    selected_release,
+                    release_ref,
                     "--single-branch",
                     repo.clone_url,
                     str(repo_path),
@@ -76,8 +79,8 @@ def sync_repositories(
             )
             continue
 
-        _run_git(["fetch", "origin", selected_release], cwd=repo_path)
-        _run_git(["checkout", "-B", selected_release, f"origin/{selected_release}"], cwd=repo_path)
-        _run_git(["pull", "--ff-only", "origin", selected_release], cwd=repo_path)
+        _run_git(["fetch", "origin", release_ref], cwd=repo_path)
+        _run_git(["checkout", "-B", release_ref, f"origin/{release_ref}"], cwd=repo_path)
+        _run_git(["pull", "--ff-only", "origin", release_ref], cwd=repo_path)
 
     return synced_paths

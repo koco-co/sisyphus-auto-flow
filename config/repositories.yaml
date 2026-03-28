@@ -6,20 +6,39 @@ supported_releases:
   - release_6.3.x
   - release_7.0.x
 repositories:
-  - name: dt-insight-engine
-    clone_url: https://github.com/koco-co/dt-insight-engine.git
+  - name: engine-plugins
+    local_path: dt-insight-engine/engine-plugins
+    clone_url: http://gitlab.prod.dtstack.cn/dt-insight-engine/engine-plugins.git
     include_in_sync: true
-  - name: dt-insight-plat
-    clone_url: https://github.com/koco-co/dt-insight-plat.git
+  - name: datasourcex
+    local_path: dt-insight-plat/datasourcex
+    clone_url: http://gitlab.prod.dtstack.cn/dt-insight-plat/datasourcex.git
     include_in_sync: true
-  - name: dt-insight-qa
-    clone_url: https://github.com/koco-co/dt-insight-qa.git
+  - name: dt-public-service
+    local_path: dt-insight-plat/dt-public-service
+    clone_url: http://gitlab.prod.dtstack.cn/dt-insight-plat/dt-public-service.git
     include_in_sync: true
-  - name: dt-insight-web
-    clone_url: https://github.com/koco-co/dt-insight-web.git
+  - name: dt-center-assets
+    local_path: dt-insight-web/dt-center-assets
+    clone_url: http://gitlab.prod.dtstack.cn/dt-insight-web/dt-center-assets.git
+    include_in_sync: true
+  - name: dt-center-metadata
+    local_path: dt-insight-web/dt-center-metadata
+    clone_url: http://gitlab.prod.dtstack.cn/dt-insight-web/dt-center-metadata.git
+    include_in_sync: true
+  - name: dtstack-httprunner
+    local_path: dt-insight-qa/dtstack-httprunner
+    clone_url: http://gitlab.prod.dtstack.cn/dt-insight-qa/dtstack-httprunner.git
     include_in_sync: false
-    reason: 前端分支命名不统一，不纳入接口自动化源码参考
+    reason: QA 仓库分支通常按测试环境定制，作为接口与环境基线参考
+  - name: dt-insight-studio
+    local_path: dt-insight-front/dt-insight-studio
+    clone_url: http://gitlab.prod.dtstack.cn/dt-insight-front/dt-insight-studio.git
+    release_ref_template: dataAssets/{release}
+    include_in_sync: false
+    reason: 前端分支命名按业务域变化，接口自动化默认不拉取前端仓库
   - name: CustomItem
-    clone_url: https://github.com/koco-co/CustomItem.git
+    local_path: CustomItem
+    clone_url: http://gitlab.prod.dtstack.cn/CustomItem/CustomItem.git
     include_in_sync: false
     reason: 定制化仓库无 CI，不纳入标准工作流

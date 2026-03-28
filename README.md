@@ -20,8 +20,10 @@
 - 小 HAR 轻量单 agent 流程
 - 大 HAR / 多场景 HAR 自适应多 agent 流程
 - 固定 release 选择与后端源码同步
+- GitLab nested 仓库映射与 release 分支模板支持
+- 优先参考 `.repos/dt-insight-web/*` 与 `.repos/dt-insight-qa/dtstack-httprunner/*`
 - 只跑当前 HAR 影响到的测试范围
-- 终端验收清单输出
+- 固定终端验收清单输出（含验收通知 / 参考源码 / 验收命令）
 
 ## 自适应工作流
 
@@ -29,8 +31,9 @@
 2. 使用 `.claude/scripts/sync_release_repos.sh` 同步后端源码
 3. 使用 `.claude/scripts/parse_har.sh` 解析 HAR（外部 HAR 会先暂存到 `.data/har/`，保留原文件）
 4. 使用 `.claude/scripts/plan_har_workflow.sh` 基于 `parsed.json` 生成 workflow manifest
-5. 大 HAR / 多场景 HAR 由 `.claude/agents/` 中的多 agent 合同按模块 / 资源域拆分协同处理
-6. 使用 `.claude/scripts/render_acceptance_summary.sh` 在终端输出验收清单
+5. 生成 manifest 时优先补出参考源码：`.repos/dt-insight-web/*` 后端仓库，以及 `.repos/dt-insight-qa/dtstack-httprunner/api/*`、`config/configs.py`、`config/env_config.py`
+6. 大 HAR / 多场景 HAR 由 `.claude/agents/` 中的多 agent 合同按模块 / 资源域拆分协同处理
+7. 使用 `.claude/scripts/render_acceptance_summary.sh` 在终端输出固定验收清单
 
 ## 关键脚本
 
@@ -40,9 +43,12 @@
 .claude/scripts/plan_har_workflow.sh .data/parsed/parsed_requests.json release_6.2.x .data/parsed/file.workflow.json
 .claude/scripts/generate_tests.sh path/to/scenario.json tests/<module>/
 .claude/scripts/render_acceptance_summary.sh .data/parsed/file.workflow.json
+uv run pytest tests/<module>/ -v --alluredir=allure-results
 ```
 
 `parse_har.sh` 会把仓库外的 HAR 先复制到 `.data/har/` 再调用解析器，因此真正被移入 `.trash/` 的是工作区副本，不会直接移动调用者原始文件。
+
+`render_acceptance_summary.sh` 会固定输出：验收通知、参考源码、HAR 给出场景、AI 补充场景、涉及模块 / 菜单 / 功能 / 代码位置、验收命令、定向执行用例、跳过项与后续跟进。
 
 ## 技能与 agent 合同
 

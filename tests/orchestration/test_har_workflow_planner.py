@@ -112,3 +112,39 @@ def test_resource_area_falls_back_to_previous_segment_for_version_only_paths() -
     from sisyphus_auto_flow.orchestration.workflow_planner import _derive_resource_area
 
     assert _derive_resource_area("/datasource/v1/") == "datasource"
+
+
+def test_planner_includes_reference_sources_and_validation_commands(monkeypatch) -> None:
+    """The workflow manifest should carry source references and explicit validation commands."""
+    from sisyphus_auto_flow.orchestration import workflow_planner
+
+    parsed = NormalizedHarResult(
+        source="assets.har",
+        total_entries=2,
+        filtered_entries=2,
+        requests=[
+            _request(1, path="/dassets/v1/dataDb/pageQuery", module="assets"),
+            _request(2, path="/dmetadata/v1/dataTable/getTableLifeCycle", module="metadata"),
+        ],
+    )
+
+    monkeypatch.setattr(
+        workflow_planner,
+        "collect_reference_sources",
+        lambda *, repo_root, modules: [
+            ".repos/dt-insight-web/dt-center-assets",
+            ".repos/dt-insight-qa/dtstack-httprunner/config/env_config.py",
+        ],
+    )
+
+    manifest = workflow_planner.plan_har_workflow(parsed, release="release_6.2.x")
+
+    assert manifest.reference_sources == [
+        ".repos/dt-insight-web/dt-center-assets",
+        ".repos/dt-insight-qa/dtstack-httprunner/config/env_config.py",
+    ]
+    assert manifest.validation_commands == [
+        "uv run pytest tests/assets tests/metadata -v --alluredir=allure-results",
+        "bash .claude/scripts/render_acceptance_summary.sh .data/parsed/assets.workflow.json",
+    ]
+    assert "请按下列命令完成验收" in manifest.acceptance_notice

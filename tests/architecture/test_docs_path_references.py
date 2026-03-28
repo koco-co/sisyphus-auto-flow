@@ -22,3 +22,5 @@ def test_workflow_docs_reference_new_adaptive_entrypoints() -> None:
     assert ".claude/agents/" in combined
     assert "Install.md" in combined
     assert "using-autoflow" in combined
+    assert "dtstack-httprunner" in combined
+    assert "验收命令" in combined

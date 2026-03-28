@@ -14,9 +14,19 @@ class RepositoryEntry(BaseModel):
     """A single repository catalog entry."""
 
     name: str = Field(description="仓库名")
+    local_path: str | None = Field(default=None, description="同步到 .repos 下的相对路径")
     clone_url: str = Field(description="clone 地址")
+    release_ref_template: str = Field(default="{release}", description="release 分支/引用模板")
     include_in_sync: bool = Field(default=True, description="是否纳入标准同步流程")
     reason: str | None = Field(default=None, description="排除原因")
+
+    def resolve_local_path(self) -> Path:
+        """Return the repo-local sync path under the .repos workspace."""
+        return Path(self.local_path or self.name)
+
+    def resolve_release_ref(self, release: str) -> str:
+        """Render the remote branch/ref to checkout for the selected release."""
+        return self.release_ref_template.format(release=release)
 
 
 class RepositoryCatalog(BaseModel):

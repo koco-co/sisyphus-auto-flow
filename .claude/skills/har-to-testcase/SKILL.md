@@ -21,6 +21,7 @@ triggers:
 - 先同步后端源码，再分析 HAR
 - 小 HAR 保持轻量流程
 - 大 HAR / 多场景 HAR 会借助 `.claude/agents/` 中的多 agent 合同
+- 参考源码优先看 `.repos/dt-insight-web/*` 与 `.repos/dt-insight-qa/dtstack-httprunner/*`
 
 如果用户还没有准备环境，先引导他查看 `Install.md` 或 `.claude/skills/using-autoflow/SKILL.md`。
 
@@ -35,6 +36,7 @@ triggers:
 - 固定支持 `release_5.3.x` / `release_6.0.x` / `release_6.2.x` / `release_6.3.x` / `release_7.0.x`
 - 默认 `release_6.2.x`
 - 不参考 `.repos/CustomItem`
+- `config/repositories.yaml` 使用 GitLab nested 仓库映射；前端分支模板如 `dataAssets/{release}` 仅作参考，不纳入默认接口同步
 
 ### 第二步：解析 HAR 并生成 workflow manifest
 
@@ -47,6 +49,7 @@ triggers:
 - 识别请求链和模块归属
 - 仓库外 HAR 会先暂存到 `.data/har/`，保留原始文件
 - workflow manifest 是后续多 agent 协同的唯一中间契约
+- manifest 会补出参考源码、QA 环境配置与验收命令
 
 ### 第三步：按 HAR 规模选择工作流
 
@@ -77,7 +80,9 @@ uv run pytest tests/<模块>/ -v --alluredir=allure-results
 
 - 输出 HAR 给出场景
 - 输出 AI 补充场景
+- 输出参考源码（含 `dtstack-httprunner` 接口与环境配置）
 - 输出涉及模块 / 菜单 / 功能 / 代码位置
+- 输出验收命令
 - 输出定向执行用例与跳过项
 
 ## 依赖的规则文件
