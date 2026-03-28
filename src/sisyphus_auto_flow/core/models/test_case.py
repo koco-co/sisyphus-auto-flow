@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-from sisyphus_auto_flow.harness.models.assertion import AssertionConfig  # noqa: TC001
-from sisyphus_auto_flow.harness.models.request import RequestConfig  # noqa: TC001
+from sisyphus_auto_flow.core.models.assertion import AssertionConfig  # noqa: TC001
+from sisyphus_auto_flow.core.models.request import RequestConfig  # noqa: TC001
 
 
 class TestStep(BaseModel):

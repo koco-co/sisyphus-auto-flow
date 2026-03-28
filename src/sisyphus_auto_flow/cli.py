@@ -18,6 +18,14 @@ from sisyphus_auto_flow.parsers.har_parser import parse_har_file
 console = Console()
 
 
+def _load_workflow_planning_input(input_path: Path) -> NormalizedHarResult:
+    """Load either a raw HAR file or a normalized parse artifact for workflow planning."""
+    raw = json.loads(input_path.read_text(encoding="utf-8"))
+    if isinstance(raw, dict) and {"source", "filtered_entries", "requests"}.issubset(raw):
+        return NormalizedHarResult.model_validate(raw)
+    return NormalizedHarResult.model_validate(parse_har_file(input_path))
+
+
 @click.group()
 @click.version_option()
 def main() -> None:
@@ -56,15 +64,21 @@ def sync_repos(release: str | None, workspace: str, dry_run: bool) -> None:
 
 
 @main.command("plan-har")
-@click.option("--har", "har_file", required=True, type=click.Path(exists=True), help="HAR 文件路径")
+@click.option(
+    "--har",
+    "har_input",
+    required=True,
+    type=click.Path(exists=True),
+    help="HAR 文件路径，或 parse_har.sh 产出的 normalized JSON",
+)
 @click.option("--release", default=None, help="要参考的 release 分支")
 @click.option("--output", required=True, type=click.Path(), help="输出 workflow manifest 的 JSON 文件")
 @click.option("--multi-agent-threshold", default=8, type=int, help="切换到 multi-agent 的请求数阈值")
-def plan_har(har_file: str, release: str | None, output: str, multi_agent_threshold: int) -> None:
-    """解析 HAR 并生成自适应工作流 manifest。"""
+def plan_har(har_input: str, release: str | None, output: str, multi_agent_threshold: int) -> None:
+    """从 HAR 或归一化解析产物生成自适应工作流 manifest。"""
     catalog = load_repository_catalog()
     selected_release = catalog.resolve_release(release)
-    parsed = NormalizedHarResult.model_validate(parse_har_file(Path(har_file)))
+    parsed = _load_workflow_planning_input(Path(har_input))
     manifest = plan_har_workflow(
         parsed,
         release=selected_release,

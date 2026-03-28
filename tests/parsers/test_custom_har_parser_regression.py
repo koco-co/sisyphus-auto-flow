@@ -85,3 +85,53 @@ def test_default_parse_har_file_is_deterministic_for_same_input(tmp_path: Path) 
     second.pop("parsed_at")
     assert first == second
     assert [request["depends_on"] for request in first["requests"]] == [None, 1]
+
+
+def test_metadata_endpoints_resolve_to_metadata_module(tmp_path: Path) -> None:
+    """Metadata service endpoints should not fall back to the unmapped bucket."""
+    har_path = tmp_path / "metadata.har"
+    har_path.write_text(
+        json.dumps(
+            {
+                "log": {
+                    "version": "1.2",
+                    "creator": {"name": "pytest", "version": "1.0"},
+                    "entries": [
+                        {
+                            "startedDateTime": "2026-03-28T00:00:00.000Z",
+                            "request": {
+                                "method": "POST",
+                                "url": "https://example.com/dmetadata/v1/syncTask/pageTask",
+                                "httpVersion": "HTTP/1.1",
+                                "headers": [{"name": "Content-Type", "value": "application/json"}],
+                                "queryString": [],
+                                "postData": {
+                                    "mimeType": "application/json",
+                                    "text": json.dumps({"current": 1, "size": 20}),
+                                },
+                            },
+                            "response": {
+                                "status": 200,
+                                "statusText": "OK",
+                                "headers": [{"name": "Content-Type", "value": "application/json"}],
+                                "content": {
+                                    "size": 15,
+                                    "mimeType": "application/json",
+                                    "text": json.dumps({"data": []}),
+                                },
+                            },
+                            "timings": {"send": 1, "wait": 2, "receive": 3},
+                        }
+                    ],
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = parse_har_file(har_path)
+    request = result["requests"][0]
+
+    assert request["module"] == "metadata"
+    assert request["module_api_dir"] == "metadata"
+    assert request["module_description"] == "元数据中心"

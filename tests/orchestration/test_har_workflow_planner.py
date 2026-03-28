@@ -71,3 +71,44 @@ def test_large_multi_module_har_switches_to_multi_agent_flow() -> None:
     assert any(target.startswith("tests/assets") for target in manifest.targeted_tests)
     assert any(target.startswith("tests/batch") for target in manifest.targeted_tests)
     assert len(manifest.writer_tasks) >= 2
+
+
+def test_multi_agent_flow_splits_same_module_requests_by_resource_area() -> None:
+    """Large same-module HAR inputs should decompose by functional resource area."""
+    from sisyphus_auto_flow.orchestration.workflow_planner import plan_har_workflow
+
+    parsed = NormalizedHarResult(
+        source="metadata.har",
+        total_entries=8,
+        filtered_entries=8,
+        requests=[
+            _request(1, path="/dmetadata/v1/syncTask/pageTask", module="metadata"),
+            _request(2, path="/dmetadata/v1/syncTask/realTimeTableList", module="metadata"),
+            _request(3, path="/dmetadata/v1/syncTask/add", module="metadata"),
+            _request(4, path="/dmetadata/v1/dataSource/listMetadataDataSource", module="metadata"),
+            _request(5, path="/dmetadata/v1/dataDb/realTimeDbList", module="metadata"),
+            _request(6, path="/dmetadata/v1/dataTable/getTableLifeCycle", module="metadata"),
+            _request(7, path="/dmetadata/v1/dataTable/queryTablePermission", module="metadata"),
+            _request(8, path="/dmetadata/v1/metadataApply/getApplyStatus", module="metadata"),
+        ],
+    )
+
+    manifest = plan_har_workflow(parsed, release="release_6.2.x")
+
+    assert manifest.workflow_mode == "multi_agent"
+    assert {group.name for group in manifest.scenario_groups} >= {
+        "metadata-syncTask-scenario",
+        "metadata-dataSource-scenario",
+        "metadata-dataDb-scenario",
+        "metadata-dataTable-scenario",
+        "metadata-metadataApply-scenario",
+    }
+    assert set(manifest.targeted_tests) == {"tests/metadata"}
+    assert len(manifest.writer_tasks) >= 5
+
+
+def test_resource_area_falls_back_to_previous_segment_for_version_only_paths() -> None:
+    """Version-only path tails should not become scenario resource names."""
+    from sisyphus_auto_flow.orchestration.workflow_planner import _derive_resource_area
+
+    assert _derive_resource_area("/datasource/v1/") == "datasource"

@@ -30,6 +30,34 @@ def _group_requests_by_module(parsed: NormalizedHarResult) -> OrderedDict[str, l
     return grouped
 
 
+def _derive_resource_area(path: str) -> str:
+    """Derive a stable functional area from a versioned API path."""
+    segments = [segment for segment in path.split("/") if segment]
+    for index, segment in enumerate(segments):
+        if segment.startswith("v") and segment[1:].isdigit() and index + 1 < len(segments):
+            return segments[index + 1]
+    if not segments:
+        return "unknown"
+
+    candidate = segments[-1]
+    if candidate.startswith("v") and candidate[1:].isdigit():
+        return segments[-2] if len(segments) > 1 else "unknown"
+    return candidate
+
+
+def _group_requests_for_workflow(
+    parsed: NormalizedHarResult,
+    *,
+    workflow_mode: str,
+) -> OrderedDict[tuple[str, str], list]:
+    grouped: OrderedDict[tuple[str, str], list] = OrderedDict()
+    for request in parsed.requests:
+        module = request.module or "unmapped"
+        resource_area = module if workflow_mode == "single_agent" else _derive_resource_area(request.path)
+        grouped.setdefault((module, resource_area), []).append(request)
+    return grouped
+
+
 def plan_har_workflow(
     parsed: NormalizedHarResult,
     *,
@@ -37,16 +65,24 @@ def plan_har_workflow(
     multi_agent_request_threshold: int = DEFAULT_MULTI_AGENT_REQUEST_THRESHOLD,
 ) -> HarWorkflowManifest:
     """Plan an adaptive workflow from a normalized HAR result."""
-    grouped = _group_requests_by_module(parsed)
+    grouped_by_module = _group_requests_by_module(parsed)
+    workflow_mode = "single_agent"
+    if len(grouped_by_module) > 1 or parsed.filtered_entries >= multi_agent_request_threshold:
+        workflow_mode = "multi_agent"
+
+    grouped = _group_requests_for_workflow(parsed, workflow_mode=workflow_mode)
     scenario_groups: list[WorkflowScenarioGroup] = []
     impacted_areas: list[WorkflowImpactedArea] = []
 
-    for module, requests in grouped.items():
+    for (module, resource_area), requests in grouped.items():
         module_description = requests[0].module_description or module
         target_test_path = f"tests/{module}"
+        scenario_name = (
+            f"{module}-scenario" if workflow_mode == "single_agent" else f"{module}-{resource_area}-scenario"
+        )
         scenario_groups.append(
             WorkflowScenarioGroup(
-                name=f"{module}-scenario",
+                name=scenario_name,
                 module=module,
                 request_sequences=[request.sequence for request in requests],
                 endpoints=[request.path for request in requests],
@@ -56,7 +92,9 @@ def plan_har_workflow(
         impacted_areas.append(
             WorkflowImpactedArea(
                 module=module,
-                menu=module_description,
+                menu=module_description
+                if workflow_mode == "single_agent"
+                else f"{module_description} / {resource_area}",
                 function=" / ".join(dict.fromkeys(request.path for request in requests)),
                 code_locations=[
                     f"api/{module}/",
@@ -65,10 +103,6 @@ def plan_har_workflow(
                 ],
             )
         )
-
-    workflow_mode = "single_agent"
-    if len(grouped) > 1 or parsed.filtered_entries >= multi_agent_request_threshold:
-        workflow_mode = "multi_agent"
 
     writer_tasks = [
         WorkflowWriterTask(

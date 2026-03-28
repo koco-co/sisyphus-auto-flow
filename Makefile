@@ -34,7 +34,7 @@ parse-har: ## Parse a HAR file (usage: make parse-har FILE=path/to/file.har)
 sync-repos: ## Sync backend source repositories (usage: make sync-repos RELEASE=release_6.2.x)
 	@bash .claude/scripts/sync_release_repos.sh $(or $(RELEASE),release_6.2.x)
 
-plan-har: ## Generate workflow manifest (usage: make plan-har FILE=path.har RELEASE=release_6.2.x OUTPUT=.data/parsed/file.workflow.json)
+plan-har: ## Generate workflow manifest (usage: make plan-har FILE=.data/parsed/parsed_requests.json RELEASE=release_6.2.x OUTPUT=.data/parsed/file.workflow.json)
 	@bash .claude/scripts/plan_har_workflow.sh $(FILE) $(or $(RELEASE),release_6.2.x) $(OUTPUT)
 
 render-acceptance: ## Render acceptance checklist (usage: make render-acceptance MANIFEST=.data/parsed/file.workflow.json)

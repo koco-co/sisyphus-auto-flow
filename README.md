@@ -27,9 +27,9 @@
 
 1. 先选择 release，默认 `release_6.2.x`
 2. 使用 `.claude/scripts/sync_release_repos.sh` 同步后端源码
-3. 使用 `.claude/scripts/parse_har.sh` 解析 HAR
-4. 使用 `.claude/scripts/plan_har_workflow.sh` 生成 workflow manifest
-5. 大 HAR / 多场景 HAR 由 `.claude/agents/` 中的多 agent 合同协同处理
+3. 使用 `.claude/scripts/parse_har.sh` 解析 HAR（外部 HAR 会先暂存到 `.data/har/`，保留原文件）
+4. 使用 `.claude/scripts/plan_har_workflow.sh` 基于 `parsed.json` 生成 workflow manifest
+5. 大 HAR / 多场景 HAR 由 `.claude/agents/` 中的多 agent 合同按模块 / 资源域拆分协同处理
 6. 使用 `.claude/scripts/render_acceptance_summary.sh` 在终端输出验收清单
 
 ## 关键脚本
@@ -37,10 +37,12 @@
 ```bash
 .claude/scripts/sync_release_repos.sh release_6.2.x
 .claude/scripts/parse_har.sh path/to/file.har .data/parsed/parsed_requests.json
-.claude/scripts/plan_har_workflow.sh path/to/file.har release_6.2.x .data/parsed/file.workflow.json
+.claude/scripts/plan_har_workflow.sh .data/parsed/parsed_requests.json release_6.2.x .data/parsed/file.workflow.json
 .claude/scripts/generate_tests.sh path/to/scenario.json tests/<module>/
 .claude/scripts/render_acceptance_summary.sh .data/parsed/file.workflow.json
 ```
+
+`parse_har.sh` 会把仓库外的 HAR 先复制到 `.data/har/` 再调用解析器，因此真正被移入 `.trash/` 的是工作区副本，不会直接移动调用者原始文件。
 
 ## 技能与 agent 合同
 

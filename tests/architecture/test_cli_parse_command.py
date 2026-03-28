@@ -126,6 +126,79 @@ def test_parse_wrapper_matches_cli_output(tmp_path: Path) -> None:
     assert wrapper_json == cli_json
 
 
+def test_parse_then_plan_wrappers_support_two_step_flow(tmp_path: Path) -> None:
+    """The wrapper pipeline should stage a repo-local HAR copy and keep the caller's source file."""
+    repo_root = Path(__file__).resolve().parents[2]
+    har_path = tmp_path / "sample.har"
+    parsed_output = tmp_path / "parsed.json"
+    manifest_output = tmp_path / "workflow.json"
+    har_path.write_text(
+        json.dumps(
+            {
+                "log": {
+                    "version": "1.2",
+                    "creator": {"name": "pytest", "version": "1.0"},
+                    "entries": [
+                        {
+                            "startedDateTime": "2026-03-28T00:00:00.000Z",
+                            "request": {
+                                "method": "POST",
+                                "url": "https://example.com/dassets/v1/dataDb/batchAddDb",
+                                "httpVersion": "HTTP/1.1",
+                                "headers": [{"name": "Content-Type", "value": "application/json"}],
+                                "queryString": [],
+                                "postData": {
+                                    "mimeType": "application/json",
+                                    "text": json.dumps({"datasource_name": "demo"}),
+                                },
+                            },
+                            "response": {
+                                "status": 200,
+                                "statusText": "OK",
+                                "headers": [{"name": "Content-Type", "value": "application/json"}],
+                                "content": {
+                                    "size": 19,
+                                    "mimeType": "application/json",
+                                    "text": json.dumps({"data": {"id": 1}}),
+                                },
+                            },
+                            "timings": {"send": 1, "wait": 2, "receive": 3},
+                        }
+                    ],
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    parse_wrapper = repo_root / ".claude" / "scripts" / "parse_har.sh"
+    parse_result = subprocess.run(
+        ["bash", str(parse_wrapper), str(har_path), str(parsed_output)],
+        capture_output=True,
+        cwd=repo_root,
+        text=True,
+        check=False,
+    )
+    assert parse_result.returncode == 0, parse_result.stdout + parse_result.stderr
+    assert parsed_output.exists()
+    assert har_path.exists()
+
+    plan_wrapper = repo_root / ".claude" / "scripts" / "plan_har_workflow.sh"
+    plan_result = subprocess.run(
+        ["bash", str(plan_wrapper), str(parsed_output), "release_6.2.x", str(manifest_output)],
+        capture_output=True,
+        cwd=repo_root,
+        text=True,
+        check=False,
+    )
+    assert plan_result.returncode == 0, plan_result.stdout + plan_result.stderr
+    assert manifest_output.exists()
+
+    manifest = json.loads(manifest_output.read_text(encoding="utf-8"))
+    assert manifest["source_har"] == "sample.har"
+    assert manifest["release"] == "release_6.2.x"
+
+
 def test_generate_wrapper_creates_pytest_file(tmp_path: Path) -> None:
     """The agent-facing generation wrapper should create a pytest file from a scenario JSON payload."""
     repo_root = Path(__file__).resolve().parents[2]

@@ -92,15 +92,15 @@ sisyphus-auto-flow/
 
 ```bash
 .claude/scripts/parse_har.sh <har_file> .data/parsed/parsed_requests.json
-.claude/scripts/plan_har_workflow.sh <har_file> <release> .data/parsed/<name>.workflow.json
+.claude/scripts/plan_har_workflow.sh .data/parsed/parsed_requests.json <release> .data/parsed/<name>.workflow.json
 ```
 
-解析完成后，自动将 HAR 文件移入 `.trash/` 回收站。
+如果输入 HAR 位于仓库外部，wrapper 会先将其暂存到 `.data/har/`，然后解析并把这份工作区副本移入 `.trash/` 回收站，避免直接移动用户原始文件。
 
 ### Step 2: 自适应选择工作流
 
 - 小 HAR / 单场景 HAR：主 agent 直接继续
-- 大 HAR / 多场景 HAR：主 agent 读取 `.data/parsed/<name>.workflow.json`，并参考 `.claude/agents/` 进行任务解耦与分派
+- 大 HAR / 多场景 HAR：主 agent 读取 `.data/parsed/<name>.workflow.json`，并参考 `.claude/agents/` 按模块 / 资源域进行任务解耦与分派
 
 建议 agent 角色：
 

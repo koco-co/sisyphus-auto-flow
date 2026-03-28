@@ -40,17 +40,18 @@ triggers:
 
 ```bash
 .claude/scripts/parse_har.sh <har文件路径> .data/parsed/parsed_requests.json
-.claude/scripts/plan_har_workflow.sh <har文件路径> release_6.2.x .data/parsed/file.workflow.json
+.claude/scripts/plan_har_workflow.sh .data/parsed/parsed_requests.json release_6.2.x .data/parsed/file.workflow.json
 ```
 
 - 自动过滤静态资源
 - 识别请求链和模块归属
+- 仓库外 HAR 会先暂存到 `.data/har/`，保留原始文件
 - workflow manifest 是后续多 agent 协同的唯一中间契约
 
 ### 第三步：按 HAR 规模选择工作流
 
 - 小 HAR：主 agent 直接继续
-- 大 HAR / 多场景 HAR：主 agent 参考 `.claude/agents/` 分配 `har-decomposer`、`scenario-planner`、`test-writer`、`test-reviewer`、`targeted-executor`
+- 大 HAR / 多场景 HAR：主 agent 参考 `.claude/agents/` 按模块 / 资源域分配 `har-decomposer`、`scenario-planner`、`test-writer`、`test-reviewer`、`targeted-executor`
 
 ### 第四步：生成测试代码
 
