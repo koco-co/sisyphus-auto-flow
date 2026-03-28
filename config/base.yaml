@@ -1,0 +1,21 @@
+# 基础配置 — 所有环境共享
+project:
+  name: "sisyphus-auto-flow"
+  description: "AI 驱动的接口自动化测试用例生成工作流"
+  version: "0.1.0"
+
+# HTTP 客户端默认配置
+http:
+  timeout: 30  # 超时时间（秒）
+  retry_count: 0  # 默认不重试
+  verify_ssl: true
+
+# 日志配置
+logging:
+  level: "INFO"
+  format: "{time:YYYY-MM-DD HH:mm:ss} | {level:<8} | {message}"
+
+# Allure 报告配置
+reporting:
+  allure_dir: "allure-results"
+  clean_before_run: true

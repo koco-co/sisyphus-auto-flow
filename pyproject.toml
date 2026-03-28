@@ -1,0 +1,115 @@
+[project]
+name = "sisyphus-auto-flow"
+version = "0.1.0"
+description = "AI-driven API test generation workflow powered by coding agents. Transform HAR files into standardized pytest test cases with intelligent scenario completion."
+requires-python = ">=3.13"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "koco-co" },
+]
+keywords = ["api-testing", "test-automation", "har", "pytest", "ai-driven"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Framework :: Pytest",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Testing",
+]
+
+dependencies = [
+    "httpx>=0.28",
+    "pydantic>=2.10",
+    "pydantic-settings>=2.7",
+    "pyyaml>=6.0",
+    "jsonpath-ng>=1.7",
+    "pymysql>=1.1",
+    "cryptography>=44.0",
+    "jinja2>=3.1",
+    "rich>=13.9",
+    "loguru>=0.7",
+    "allure-pytest>=2.13",
+    "click>=8.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-xdist>=3.5",
+    "pytest-rerunfailures>=15.0",
+    "pytest-asyncio>=0.25",
+    "pytest-ordering>=0.6",
+    "pyright>=1.1",
+    "ruff>=0.9",
+    "pre-commit>=4.1",
+    "ipython>=8.30",
+]
+
+[project.scripts]
+saf = "sisyphus_auto_flow.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+src = ["src"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "TCH",  # flake8-type-checking
+    "RUF",  # ruff-specific rules
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "B008",   # do not perform function calls in argument defaults
+    "RUF001", # ambiguous unicode chars in strings (CJK punctuation)
+    "RUF002", # ambiguous unicode chars in docstrings (CJK punctuation)
+    "RUF003", # ambiguous unicode chars in comments (CJK punctuation)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["sisyphus_auto_flow"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+
+[tool.pyright]
+pythonVersion = "3.13"
+typeCheckingMode = "standard"
+venvPath = "."
+venv = ".venv"
+include = ["src"]
+exclude = [".repos", "tests", ".venv"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
+]
+markers = [
+    "smoke: Smoke test cases (quick validation)",
+    "regression: Regression test cases",
+    "crud: CRUD lifecycle test cases",
+    "auth: Authentication related test cases",
+    "negative: Negative/error scenario test cases",
+    "slow: Tests that take > 5s to run",
+]

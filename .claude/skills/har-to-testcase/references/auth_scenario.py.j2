@@ -1,0 +1,108 @@
+"""{{ module_description | default('登录认证完整测试场景。') }}
+
+覆盖正常登录、token 验证、异常登录等场景。
+"""
+
+from __future__ import annotations
+
+import allure
+
+from sisyphus_auto_flow.harness.base_test import BaseAPITest
+
+
+@allure.epic("{{ epic | default('系统安全') }}")
+@allure.feature("{{ feature | default('登录认证') }}")
+class {{ class_name }}(BaseAPITest):
+    """{{ scenario_description | default('登录认证完整场景。') }}"""
+
+    @allure.story("正常登录")
+    @allure.severity(allure.severity_level.BLOCKER)
+    def test_01_login_with_valid_credentials_returns_token(self):
+        """正常登录：使用合法账号密码，期望返回 token。"""
+        response = self.request("POST", "{{ login_endpoint }}", json={
+            "{{ username_field | default('username') }}": "{{ valid_username }}",
+            "{{ password_field | default('password') }}": "{{ valid_password }}",
+        })
+
+        self.assert_status(response, 200)
+        self.assert_json_field(response, "{{ token_path | default('$.data.token') }}", exists=True)
+
+        # 保存 token
+        token = self.extract_json(response, "{{ token_path | default('$.data.token') }}")
+        self.save("auth_token", token)
+
+    @allure.story("Token 验证")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_02_access_protected_api_with_token_returns_200(self):
+        """携带有效 token：访问受保护接口，期望 200。"""
+        token = self.load("auth_token")
+
+        response = self.request(
+            "GET", "{{ protected_endpoint | default('/api/v1/users/me') }}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        self.assert_status(response, 200)
+{%- for assertion in protected_assertions | default([]) %}
+        {{ assertion }}
+{%- endfor %}
+
+    @allure.story("无 Token 访问")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_03_access_protected_api_without_token_returns_401(self):
+        """无 token 访问：不携带认证信息，期望 401。"""
+        response = self.request(
+            "GET", "{{ protected_endpoint | default('/api/v1/users/me') }}",
+            headers={"Authorization": ""},
+        )
+
+        self.assert_status(response, 401)
+
+    @allure.story("异常登录")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_04_login_with_wrong_password_returns_401(self):
+        """密码错误：使用错误密码登录，期望 401。"""
+        response = self.request("POST", "{{ login_endpoint }}", json={
+            "{{ username_field | default('username') }}": "{{ valid_username }}",
+            "{{ password_field | default('password') }}": "wrong_password_123",
+        })
+
+        self.assert_status(response, 401)
+        self.assert_json_field(response, "$.message", exists=True)
+
+    @allure.story("异常登录")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_05_login_with_nonexistent_user_returns_401(self):
+        """用户不存在：使用不存在的用户名，期望 401。"""
+        response = self.request("POST", "{{ login_endpoint }}", json={
+            "{{ username_field | default('username') }}": "nonexistent_user_999",
+            "{{ password_field | default('password') }}": "any_password",
+        })
+
+        self.assert_status(response, 401)
+
+    @allure.story("异常登录")
+    @allure.severity(allure.severity_level.MINOR)
+    def test_06_login_without_password_returns_400(self):
+        """缺少密码：只传用户名不传密码，期望 400。"""
+        response = self.request("POST", "{{ login_endpoint }}", json={
+            "{{ username_field | default('username') }}": "{{ valid_username }}",
+        })
+
+        self.assert_status(response, 400)
+{%- if has_refresh_token %}
+
+    @allure.story("Token 刷新")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_07_refresh_token_returns_new_token(self):
+        """刷新 token：使用有效 token 刷新，获取新 token。"""
+        token = self.load("auth_token")
+
+        response = self.request(
+            "POST", "{{ refresh_endpoint }}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        self.assert_status(response, 200)
+        self.assert_json_field(response, "{{ token_path | default('$.data.token') }}", exists=True)
+{%- endif %}

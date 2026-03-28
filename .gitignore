@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
+allure-results/
+allure-report/
+reports/*
+!reports/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Temporary files
+tmp/
+*.tmp
+har_files/*.har
+
+# 回收站（仅保留 .gitkeep）
+.trash/*
+!.trash/.gitkeep
+
+# 源码参考（不提交到仓库）
+.repos/
+
+# Claude 配置中的缓存
+.claude/plugins/
+.claude/sessions/

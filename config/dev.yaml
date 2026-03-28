@@ -1,0 +1,22 @@
+# 开发环境配置
+environment:
+  name: "dev"
+  description: "开发环境"
+
+# API 基础地址
+api:
+  base_url: "http://localhost:8080"
+
+# 数据库配置
+databases:
+  default:
+    host: "localhost"
+    port: 3306
+    user: "root"
+    password: "${DB_PASSWORD}"  # 从环境变量读取
+    database: "test_dev"
+    charset: "utf8mb4"
+
+# 日志级别覆盖
+logging:
+  level: "DEBUG"

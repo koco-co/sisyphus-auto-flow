@@ -1,0 +1,16 @@
+# 预发布环境配置
+environment:
+  name: "staging"
+  description: "预发布环境"
+
+api:
+  base_url: "${STAGING_API_URL}"
+
+databases:
+  default:
+    host: "${STAGING_DB_HOST}"
+    port: 3306
+    user: "${STAGING_DB_USER}"
+    password: "${STAGING_DB_PASSWORD}"
+    database: "test_staging"
+    charset: "utf8mb4"

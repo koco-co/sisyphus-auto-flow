@@ -1,0 +1,22 @@
+{
+  "language": "中文",
+  "permissions": {
+    "allow": [
+      "Bash(make *)",
+      "Bash(uv *)",
+      "Bash(python -m sisyphus_auto_flow*)",
+      "Bash(pytest *)",
+      "Bash(ruff *)",
+      "Bash(pyright *)",
+      "Bash(git *)",
+      "Bash(scripts/*)",
+      "Bash(cat *)",
+      "Bash(ls *)",
+      "Bash(find *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(wc *)"
+    ],
+    "deny": []
+  }
+}

@@ -1,0 +1,15 @@
+# 生产环境配置（仅供只读验证，禁止写入操作）
+environment:
+  name: "prod"
+  description: "生产环境（只读）"
+
+api:
+  base_url: "${PROD_API_URL}"
+
+# 生产环境不配置数据库（安全考虑）
+# databases: null
+
+# 安全限制
+safety:
+  allow_write: false  # 禁止写入操作
+  allow_delete: false  # 禁止删除操作

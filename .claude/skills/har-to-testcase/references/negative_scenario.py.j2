@@ -1,0 +1,47 @@
+"""{{ module_description | default('接口异常场景测试。') }}
+
+覆盖参数校验、资源不存在、权限控制、资源冲突等异常分支。
+"""
+
+from __future__ import annotations
+
+import allure
+
+from sisyphus_auto_flow.harness.base_test import BaseAPITest
+
+
+@allure.epic("{{ epic }}")
+@allure.feature("{{ feature }} - 异常场景")
+class {{ class_name }}(BaseAPITest):
+    """{{ resource_name }}异常场景覆盖。"""
+{%- for scenario in scenarios %}
+
+    @allure.story("{{ scenario.story }}")
+    @allure.severity(allure.severity_level.{{ scenario.severity | default('MINOR') }})
+    def test_{{ '%02d' | format(loop.index) }}_{{ scenario.method_name }}(self):
+        """{{ scenario.description }}"""
+{%- if scenario.setup %}
+        # --- Arrange ---
+        {{ scenario.setup }}
+{%- endif %}
+
+        # --- Act ---
+        response = self.request(
+            "{{ scenario.http_method }}", "{{ scenario.endpoint }}",
+{%- if scenario.json_body %}
+            json={{ scenario.json_body }},
+{%- endif %}
+{%- if scenario.headers %}
+            headers={{ scenario.headers }},
+{%- endif %}
+{%- if scenario.params %}
+            params={{ scenario.params }},
+{%- endif %}
+        )
+
+        # --- Assert ---
+        self.assert_status(response, {{ scenario.expected_status }})
+{%- for assertion in scenario.assertions | default([]) %}
+        {{ assertion }}
+{%- endfor %}
+{%- endfor %}

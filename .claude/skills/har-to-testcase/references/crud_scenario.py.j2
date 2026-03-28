@@ -1,0 +1,120 @@
+"""{{ module_description | default('模块 CRUD 完整测试场景。') }}
+
+覆盖{{ resource_name }}的创建、查询、更新、删除全生命周期。
+"""
+
+from __future__ import annotations
+
+import allure
+
+from sisyphus_auto_flow.harness.base_test import BaseAPITest
+
+
+@allure.epic("{{ epic }}")
+@allure.feature("{{ feature }}")
+class {{ class_name }}(BaseAPITest):
+    """{{ resource_name }}增改查删完整场景。"""
+
+    @allure.story("前置清理")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_01_cleanup_test_data(self):
+        """前置：清理历史测试数据，确保环境干净。"""
+{%- if pre_sql %}
+        self.execute_sql(
+            "{{ pre_sql }}",
+            params={{ pre_sql_params | default('["autotest_%"]') }},
+        )
+{%- else %}
+        # 根据实际情况添加数据清理逻辑
+        pass
+{%- endif %}
+
+    @allure.story("创建{{ resource_name }}")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_02_create_{{ resource_key }}_with_valid_data_returns_201(self):
+        """创建{{ resource_name }}：提交合法数据，期望返回 201。"""
+        # --- Arrange ---
+        payload = {{ create_payload }}
+
+        # --- Act ---
+        response = self.request("POST", "{{ create_endpoint }}", json=payload)
+
+        # --- Assert ---
+        self.assert_status(response, 201)
+        self.assert_json_field(response, "$.data.id", exists=True)
+{%- for assertion in create_assertions | default([]) %}
+        {{ assertion }}
+{%- endfor %}
+
+        # 提取 ID 供后续使用
+        {{ resource_key }}_id = self.extract_json(response, "$.data.id")
+        self.save("{{ resource_key }}_id", {{ resource_key }}_id)
+
+    @allure.story("查询{{ resource_name }}")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_03_get_{{ resource_key }}_by_id_returns_detail(self):
+        """查询{{ resource_name }}：根据 ID 查询详情，验证数据一致性。"""
+        {{ resource_key }}_id = self.load("{{ resource_key }}_id")
+
+        response = self.request("GET", f"{{ get_endpoint }}")
+
+        self.assert_status(response, 200)
+        self.assert_json_field(response, "$.data.id", expected={{ resource_key }}_id)
+{%- for assertion in get_assertions | default([]) %}
+        {{ assertion }}
+{%- endfor %}
+
+    @allure.story("更新{{ resource_name }}")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_04_update_{{ resource_key }}_with_new_data_returns_200(self):
+        """更新{{ resource_name }}：修改字段，验证更新成功。"""
+        {{ resource_key }}_id = self.load("{{ resource_key }}_id")
+
+        # --- Arrange ---
+        payload = {{ update_payload }}
+
+        # --- Act ---
+        response = self.request("PUT", f"{{ update_endpoint }}", json=payload)
+
+        # --- Assert ---
+        self.assert_status(response, 200)
+{%- for assertion in update_assertions | default([]) %}
+        {{ assertion }}
+{%- endfor %}
+
+    @allure.story("查询{{ resource_name }}")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_05_get_{{ resource_key }}_after_update_returns_new_data(self):
+        """验证更新：查询更新后的{{ resource_name }}，确认字段已变更。"""
+        {{ resource_key }}_id = self.load("{{ resource_key }}_id")
+
+        response = self.request("GET", f"{{ get_endpoint }}")
+
+        self.assert_status(response, 200)
+{%- for assertion in verify_update_assertions | default([]) %}
+        {{ assertion }}
+{%- endfor %}
+
+    @allure.story("删除{{ resource_name }}")
+    @allure.severity(allure.severity_level.CRITICAL)
+    def test_06_delete_{{ resource_key }}_returns_success(self):
+        """删除{{ resource_name }}：删除已创建的资源。"""
+        {{ resource_key }}_id = self.load("{{ resource_key }}_id")
+
+        response = self.request("DELETE", f"{{ delete_endpoint }}")
+
+        self.assert_status(response, 200)
+{%- if delete_db_assertion %}
+        # 数据库断言：验证已删除
+        {{ delete_db_assertion }}
+{%- endif %}
+
+    @allure.story("查询{{ resource_name }}")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_07_get_deleted_{{ resource_key }}_returns_404(self):
+        """验证删除：查询已删除的{{ resource_name }}，期望返回 404。"""
+        {{ resource_key }}_id = self.load("{{ resource_key }}_id")
+
+        response = self.request("GET", f"{{ get_endpoint }}")
+
+        self.assert_status(response, 404)
