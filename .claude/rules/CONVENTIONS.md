@@ -34,7 +34,7 @@ import allure
 import pytest
 
 # 3. 项目内部
-from sisyphus_auto_flow.harness.base_test import BaseAPITest
+from sisyphus_auto_flow.core.base import BaseAPITest
 ```
 
 ## 类结构

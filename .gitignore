@@ -40,13 +40,18 @@ Thumbs.db
 # Temporary files
 tmp/
 *.tmp
-har_files/*.har
+
+# 数据暂存（HAR 输入 + 解析中间文件）
+.data/har/*.har
+.data/parsed/*
+!.data/har/.gitkeep
+!.data/parsed/.gitkeep
 
 # 回收站（仅保留 .gitkeep）
 .trash/*
 !.trash/.gitkeep
 
-# 源码参考（不提交到仓库）
+# 源码参考
 .repos/
 
 # Claude 配置中的缓存

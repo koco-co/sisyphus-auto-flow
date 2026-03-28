@@ -8,83 +8,73 @@
 
 ## 简介
 
-`sisyphus-auto-flow` 是一个基于 Coding Agent（Claude Code、Codex、Copilot）的接口自动化测试用例生成工作流。
-它能将浏览器录制的 HAR 文件自动转化为标准化的 pytest 测试用例，并结合源码分析，智能补全测试场景。
+`sisyphus-auto-flow` 用于把浏览器录制的 HAR 文件转换成标准化 pytest 接口自动化测试，并结合源码分析、规则模板和 AI 工作流补全场景。
 
-### 核心特性
+## AI 安装提示
 
-- 🎯 **HAR 驱动** — 从真实的浏览器操作录制中提取接口信息
-- 🤖 **AI 辅助** — Coding Agent 自动分析源码，补全 CRUD 闭环
-- 📐 **Harness 工程** — 标准化的测试基类、断言方法、代码风格
-- 🔄 **自动修复** — 测试失败后自动分析、修复、重跑
-- 📊 **Allure 报告** — 生成可视化的测试报告
+按照 https://github.com/koco-co/sisyphus-auto-flow/blob/main/Install.md把它的本地开发环境初始化好
 
-### 工作流程
+## 核心能力
 
-```
-HAR 文件 → 解析提取 → 源码分析 → 场景确认 → 代码生成 → 自动执行 → 报告验收
-```
+- HAR 解析与归一化
+- 小 HAR 轻量单 agent 流程
+- 大 HAR / 多场景 HAR 自适应多 agent 流程
+- 固定 release 选择与后端源码同步
+- 只跑当前 HAR 影响到的测试范围
+- 终端验收清单输出
 
-## 快速开始
+## 自适应工作流
+
+1. 先选择 release，默认 `release_6.2.x`
+2. 使用 `.claude/scripts/sync_release_repos.sh` 同步后端源码
+3. 使用 `.claude/scripts/parse_har.sh` 解析 HAR
+4. 使用 `.claude/scripts/plan_har_workflow.sh` 生成 workflow manifest
+5. 大 HAR / 多场景 HAR 由 `.claude/agents/` 中的多 agent 合同协同处理
+6. 使用 `.claude/scripts/render_acceptance_summary.sh` 在终端输出验收清单
+
+## 关键脚本
 
 ```bash
-# 克隆仓库
-git clone https://github.com/koco-co/sisyphus-auto-flow.git
-cd sisyphus-auto-flow
-
-# 安装依赖
-make install
-
-# 运行测试
-make test
+.claude/scripts/sync_release_repos.sh release_6.2.x
+.claude/scripts/parse_har.sh path/to/file.har .data/parsed/parsed_requests.json
+.claude/scripts/plan_har_workflow.sh path/to/file.har release_6.2.x .data/parsed/file.workflow.json
+.claude/scripts/generate_tests.sh path/to/scenario.json tests/<module>/
+.claude/scripts/render_acceptance_summary.sh .data/parsed/file.workflow.json
 ```
 
-## 技术栈
+## 技能与 agent 合同
 
-| 组件 | 技术选型 |
-|------|---------|
-| 运行环境 | Python 3.13+ |
-| 包管理 | uv |
-| 测试框架 | pytest 8.x |
-| HTTP 客户端 | httpx |
-| 数据校验 | pydantic 2.x |
-| 类型检查 | pyright |
-| 代码规范 | ruff + pre-commit |
-| 测试报告 | allure-pytest |
-| 日志 | loguru |
-| 模板引擎 | jinja2 |
+- `.claude/skills/using-autoflow/SKILL.md`
+- `.claude/skills/har-to-testcase/SKILL.md`
+- `.claude/agents/har-decomposer.md`
+- `.claude/agents/scenario-planner.md`
+- `.claude/agents/test-writer.md`
+- `.claude/agents/test-reviewer.md`
+- `.claude/agents/targeted-executor.md`
+
+## 项目结构
+
+```text
+.claude/                        # skills / agents / scripts / rules
+.data/parsed/                   # HAR 解析结果和 workflow manifest
+.repos/                         # 后端源码参考目录（不含 CustomItem）
+src/sisyphus_auto_flow/         # runtime SDK 与 CLI
+api/ tests/ testdata/           # 自动化代码三层映射
+config/                         # 环境配置与 repositories.yaml
+Install.md                      # 安装与初始化说明
+CHANGELOG.md                    # 变更记录
+```
 
 ## 开发命令
 
 ```bash
-make install         # 安装依赖 + Git hooks
-make lint            # 代码检查
-make format          # 代码格式化
-make type-check      # 类型检查
-make test            # 运行所有测试
-make test-smoke      # 运行冒烟测试
-make test-report     # 生成 Allure 报告
-make clean           # 清理构建产物
+make install
+make type-check
+make lint
+make test
+make sync-repos RELEASE=release_6.2.x
 ```
 
-## 项目结构
+## 下一步
 
-```
-src/sisyphus_auto_flow/
-├── harness/          # Harness 工程核心
-│   ├── base_test.py  # 测试基类
-│   ├── fixtures/     # pytest fixtures
-│   ├── models/       # Pydantic 数据模型
-│   ├── validators/   # 断言工具库
-│   ├── extractors/   # 变量提取器
-│   └── utils/        # 工具集
-├── scripts/          # 工具脚本
-└── generator/        # 代码生成引擎
-
-tests/                # 测试用例
-config/               # 多环境配置
-```
-
-## License
-
-MIT
+如果你是第一次使用，建议先看 `.claude/skills/using-autoflow/SKILL.md`，然后直接给出一个 HAR 文件让我驱动完整流程。

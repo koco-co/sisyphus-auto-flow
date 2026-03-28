@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import allure
 
-from sisyphus_auto_flow.harness.base_test import BaseAPITest
+from sisyphus_auto_flow.core.base import BaseAPITest
 
 
 @allure.epic("用户管理")
@@ -155,7 +155,7 @@ from __future__ import annotations
 
 import allure
 
-from sisyphus_auto_flow.harness.base_test import BaseAPITest
+from sisyphus_auto_flow.core.base import BaseAPITest
 
 
 @allure.epic("用户管理")
@@ -246,7 +246,7 @@ from __future__ import annotations
 
 import allure
 
-from sisyphus_auto_flow.harness.base_test import BaseAPITest
+from sisyphus_auto_flow.core.base import BaseAPITest
 
 
 @allure.epic("系统安全")

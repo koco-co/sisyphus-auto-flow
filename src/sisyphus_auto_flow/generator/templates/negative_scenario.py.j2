@@ -1,0 +1,23 @@
+"""{{ scenario.description or scenario.name }} 测试。"""
+
+from __future__ import annotations
+
+import allure
+
+from sisyphus_auto_flow.core.base import BaseAPITest
+
+
+@allure.epic("{{ scenario.epic or scenario.module }}")
+@allure.feature("{{ scenario.feature or scenario.name }}")
+class Test{{ scenario.module.title().replace('_', '') }}{{ scenario.name.title().replace('_', '') }}(BaseAPITest):
+    """{{ scenario.description or scenario.name }}。"""
+
+{%- for step in scenario.steps %}
+    @allure.story("{{ step.name }}")
+    @allure.severity(allure.severity_level.NORMAL)
+    def test_{{ '%02d' | format(loop.index) }}_{{ step.name }}(self):
+        """{{ step.description or step.name }}。"""
+        response = self.request("{{ step.request.method }}", "{{ step.request.url }}")
+        self.assert_status(response, {{ step.assertions[0].expected if step.assertions else 200 }})
+
+{%- endfor %}

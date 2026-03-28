@@ -12,19 +12,17 @@ from typing import TYPE_CHECKING
 from jinja2 import Environment, FileSystemLoader
 from loguru import logger
 
+from sisyphus_auto_flow.generator.template_locator import TemplateLocator
+
 if TYPE_CHECKING:
-    from sisyphus_auto_flow.harness.models.test_case import TestScenario
+    from sisyphus_auto_flow.core.models.test_case import TestScenario
 
 
 class CodeGenerator:
     """测试用例代码生成器。"""
 
     def __init__(self, template_dir: str | Path | None = None) -> None:
-        if template_dir is None:
-            project_root = Path(__file__).resolve().parents[3]
-            template_dir = project_root / ".claude" / "skills" / "har-to-testcase" / "references"
-
-        self._template_dir = Path(template_dir)
+        self._template_dir = TemplateLocator(template_dir).resolve()
         if self._template_dir.exists():
             self._env = Environment(
                 loader=FileSystemLoader(str(self._template_dir)),
@@ -75,7 +73,7 @@ class CodeGenerator:
             "",
             "import allure",
             "",
-            "from sisyphus_auto_flow.harness.base_test import BaseAPITest",
+            "from sisyphus_auto_flow.core.base import BaseAPITest",
             "",
             "",
             f'@allure.epic("{scenario.epic or scenario.module}")',

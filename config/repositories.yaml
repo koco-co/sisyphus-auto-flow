@@ -1,0 +1,25 @@
+default_release: release_6.2.x
+supported_releases:
+  - release_5.3.x
+  - release_6.0.x
+  - release_6.2.x
+  - release_6.3.x
+  - release_7.0.x
+repositories:
+  - name: dt-insight-engine
+    clone_url: https://github.com/koco-co/dt-insight-engine.git
+    include_in_sync: true
+  - name: dt-insight-plat
+    clone_url: https://github.com/koco-co/dt-insight-plat.git
+    include_in_sync: true
+  - name: dt-insight-qa
+    clone_url: https://github.com/koco-co/dt-insight-qa.git
+    include_in_sync: true
+  - name: dt-insight-web
+    clone_url: https://github.com/koco-co/dt-insight-web.git
+    include_in_sync: false
+    reason: 前端分支命名不统一，不纳入接口自动化源码参考
+  - name: CustomItem
+    clone_url: https://github.com/koco-co/CustomItem.git
+    include_in_sync: false
+    reason: 定制化仓库无 CI，不纳入标准工作流

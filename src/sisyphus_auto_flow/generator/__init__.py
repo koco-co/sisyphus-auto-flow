@@ -4,5 +4,6 @@
 """
 
 from sisyphus_auto_flow.generator.code_generator import CodeGenerator
+from sisyphus_auto_flow.generator.template_locator import TemplateLocator
 
-__all__ = ["CodeGenerator"]
+__all__ = ["CodeGenerator", "TemplateLocator"]
