@@ -1,6 +1,6 @@
 ---
 name: sisyphus-autoflow
-description: "HAR-driven, source-aware API test automation. Generate pytest suites with L1-L5 layered assertions from HAR files + backend source code."
+description: "基于 HAR 文件驱动、结合后端源码感知的 API 自动化测试工具。从 HAR 文件与后端源码生成带有 L1-L5 分层断言的 pytest 测试套件。"
 version: "0.1.0"
 author: "koco-co"
 license: MIT
@@ -12,9 +12,9 @@ requires:
 
 # sisyphus-autoflow
 
-HAR-driven, source-aware API test automation plugin for Claude Code.
+基于 HAR 文件驱动、具备源码感知能力的 API 自动化测试 Claude Code 插件。
 
 ## Skills
 
-- `/using-autoflow` — Initialize project environment, configure repos, tech stack, and connections
-- `/autoflow <har-file>` — Generate pytest test suites from HAR files with AI-powered source analysis
+- `/using-autoflow` — 初始化项目环境，配置代码仓库、技术栈与连接信息
+- `/autoflow <har-file>` — 从 HAR 文件生成 pytest 测试套件，借助 AI 对后端源码进行深度分析
