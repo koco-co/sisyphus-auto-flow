@@ -8,7 +8,7 @@
 
 ---
 
-## Features
+## 特性
 
 - **HAR → pytest**：丢入浏览器录制的 HAR 文件，自动获得生产级 pytest 测试套件，无需手写样板代码
 - **源码感知**：读取后端源码（Controller → Service → DAO），深度理解业务逻辑，生成有意义的断言
@@ -18,24 +18,26 @@
 
 ---
 
-## Quick Start
+## 快速开始
 
 ```bash
-# 安装（Claude Code Plugin 方式）
-# 在 Claude Code 中运行：
+# 1. 安装插件（任选一种方式，详见下方"安装"章节）
+claude plugins add github:koco-co/sisyphus-autoflow
+
+# 2. 进入你的测试项目目录（新项目或已有项目均可）
+cd /path/to/your-test-project
+
+# 3. 初始化环境（首次使用）
+#    在 Claude Code 中输入：
 /using-autoflow
 
-# 首次运行：初始化项目环境
-# 在 Claude Code 中输入：
-/using-autoflow
-
-# 生成测试套件
+# 4. 丢入 HAR 文件，生成测试套件
 /autoflow ./recordings/api.har
 ```
 
 ---
 
-## How It Works
+## 工作原理
 
 sisyphus-autoflow 将 HAR 文件到测试套件的全过程分为 4 个执行波次，每波内部按依赖关系选择并行或串行调度：
 
@@ -101,7 +103,7 @@ graph TD
 
 ---
 
-## Assertion Layers（断言层级）
+## 断言层级
 
 测试用例按照 5 层断言体系组织，层层递进，从协议合规到 AI 推断的隐式业务规则：
 
@@ -144,36 +146,211 @@ graph LR
 
 ---
 
-## Installation（安装）
+## 安装
 
-### 方式一：Claude Code Plugin（推荐）
+### 前提条件
 
-确保已安装 [Claude Code](https://claude.ai/code)，然后在对话中运行：
+- [Claude Code](https://claude.ai/code) 已安装
+- Python >= 3.12
+- [uv](https://docs.astral.sh/uv/) 包管理器
+- Git
 
-```
-/using-autoflow
-```
-
-插件会自动完成环境检测、依赖安装和项目脚手架生成。
-
-### 方式二：GitHub Clone
+### 方式一：Claude Code Plugin 安装（推荐）
 
 ```bash
-# 克隆仓库
-git clone https://github.com/your-org/sisyphus-auto-flow.git
-cd sisyphus-auto-flow
-
-# 安装依赖（需要 uv）
-uv sync
-
-# 安装 Claude Code Plugin
-cp -r agents/* ~/.claude/agents/
-cp -r skills/* ~/.claude/skills/
+# 从 GitHub 安装插件
+claude plugins add github:koco-co/sisyphus-autoflow
 ```
+
+安装完成后，`/using-autoflow` 和 `/autoflow` 命令即可在 Claude Code 中使用。插件文件会被下载到 `~/.claude/plugins/` 目录中。
+
+### 方式二：从 GitHub 手动下载
+
+适用于不想使用 `claude plugins add` 或需要自定义修改的场景。
+
+```bash
+# 克隆到 Claude Code 的 plugins 目录
+git clone https://github.com/koco-co/sisyphus-autoflow.git ~/.claude/plugins/sisyphus-autoflow
+
+# 安装插件的 Python 依赖
+cd ~/.claude/plugins/sisyphus-autoflow
+uv sync
+```
+
+安装后重启 Claude Code，`/using-autoflow` 和 `/autoflow` 命令即可使用。
+
+### 方式三：直接集成到项目中（不使用 Plugin 机制）
+
+如果你不想以 Plugin 形式安装，可以将本仓库直接克隆到项目中使用：
+
+```bash
+cd /path/to/your-test-project
+
+# 将插件作为子目录克隆到项目中
+git clone https://github.com/koco-co/sisyphus-autoflow.git .autoflow-plugin
+
+# 手动复制 skills 和 agents 到 Claude Code 项目配置目录
+mkdir -p .claude/skills .claude/agents
+cp -r .autoflow-plugin/skills/* .claude/skills/
+cp -r .autoflow-plugin/agents/* .claude/agents/
+
+# 安装插件的 Python 依赖
+cd .autoflow-plugin && uv sync && cd ..
+```
+
+> 注意：使用此方式时，SKILL.md 中的 `${CLAUDE_SKILL_DIR}` 路径需要手动调整为 `.autoflow-plugin/` 的实际路径。
 
 ---
 
-## Usage（使用）
+## 融入到已有项目
+
+### 场景 A：全新的自动化测试项目
+
+从零开始创建一个新的 API 自动化测试项目：
+
+```bash
+# 1. 创建项目目录
+mkdir my-api-tests && cd my-api-tests
+git init
+
+# 2. 确保已安装 sisyphus-autoflow（任选上述三种安装方式之一）
+
+# 3. 在 Claude Code 中运行初始化向导
+/using-autoflow
+```
+
+向导会引导你完成：
+
+| 步骤 | 说明 |
+|------|------|
+| 环境检测 | 检查 Python 3.12+、uv、Git 是否就绪 |
+| 技术栈选择 | 选择推荐栈（pytest+httpx+pydantic+allure）或自定义 |
+| 源码仓库配置 | 输入后端仓库 Git 地址，自动 clone 到 `.repos/` 并生成 `repo-profiles.yaml` |
+| 连接配置 | 配置目标服务 Base URL、认证方式、数据库（可选）、通知 Webhook（可选） |
+| 脚手架生成 | 自动生成项目结构、`pyproject.toml`、`conftest.py`、`CLAUDE.md` |
+
+完成后项目结构如下：
+
+```
+my-api-tests/
+├── .autoflow/                      # autoflow 工作目录（gitignored）
+├── .repos/                         # 源码仓库（gitignored）
+│   └── {group}/{repo}/
+├── .trash/                         # HAR 回收站（gitignored）
+├── repo-profiles.yaml              # 接口→仓库映射配置（纳入版本管理）
+├── tests/
+│   ├── conftest.py                 # 全局 fixtures（client, db, auth）
+│   ├── interface/                  # 接口测试（单接口独立验证）
+│   │   └── {service_module}/
+│   │       └── test_{module}.py
+│   ├── scenariotest/               # 场景测试（CRUD 闭环、业务流程）
+│   │   └── {service_module}/
+│   │       └── test_{module}_crud.py
+│   └── unittest/                   # 单元测试（工具函数、校验器）
+│       └── ...
+├── core/
+│   ├── client.py                   # APIClient（httpx 封装，不可变 dataclass）
+│   ├── assertions.py               # L1-L5 断言工具函数
+│   ├── db.py                       # DBHelper（可选，仅在配置了 DB 时生成）
+│   └── models/                     # 公共 Pydantic 响应模型
+├── .env                            # 环境变量（gitignored）
+├── .env.example                    # 环境变量示例
+├── pyproject.toml                  # 项目配置（uv + pytest + ruff + pyright）
+├── Makefile                        # 快捷命令
+├── CLAUDE.md                       # 自动生成的项目指令（Claude Code 读取）
+└── .gitignore
+```
+
+### 场景 B：融入已有的自动化测试项目
+
+如果你已经有一个运行中的自动化测试项目（例如基于 pytest+requests 的项目），可以将 autoflow 作为增量能力添加进来：
+
+```bash
+# 1. 进入已有项目目录
+cd /path/to/existing-test-project
+
+# 2. 确保已安装 sisyphus-autoflow（任选上述三种安装方式之一）
+
+# 3. 在 Claude Code 中运行初始化向导
+/using-autoflow
+```
+
+**向导会自动检测已有项目的规范**，具体行为：
+
+| 检测项 | 已有项目行为 |
+|--------|-------------|
+| `pyproject.toml` | 检测到已存在 → **不覆盖**，保留你的配置 |
+| `conftest.py` | 检测到已存在 → **不覆盖**，仅提示需要手动添加的 fixtures |
+| 代码风格（ruff/flake8/black） | 扫描已有配置 → **询问你**：沿用项目规范 or 使用插件推荐规范 |
+| 测试目录结构 | 扫描已有结构 → **询问你**：使用已有结构 or 创建 interface/scenariotest/unittest 子目录 |
+| `.env` | 检测到已存在 → **追加**缺失的变量，不修改已有变量 |
+
+**优先级规则：项目已有规范 > 插件推荐规范**
+
+初始化完成后，只会新增 autoflow 需要的文件，不会破坏你已有的项目结构：
+
+```
+existing-test-project/
+├── ... (你已有的文件保持不动)
+│
+├── .autoflow/                      # 新增：autoflow 工作目录
+├── .repos/                         # 新增：源码仓库
+├── .trash/                         # 新增：HAR 回收站
+├── repo-profiles.yaml              # 新增：接口映射配置
+├── core/                           # 新增：autoflow 基础设施
+│   ├── client.py                   #   （如果你已有 client 封装，向导会询问是否跳过）
+│   ├── assertions.py
+│   └── db.py                       #   （可选）
+└── CLAUDE.md                       # 新增：项目指令（指向你的规范+插件规范）
+```
+
+之后正常使用 `/autoflow <har-file>` 生成测试用例，生成的代码会遵循你项目已有的规范。
+
+### 场景 C：不使用 Claude Code（纯脚本模式）
+
+如果你的团队不使用 Claude Code，仍然可以使用 autoflow 的 Python 脚本作为工具链：
+
+```bash
+# 克隆仓库
+git clone https://github.com/koco-co/sisyphus-autoflow.git
+cd sisyphus-autoflow && uv sync
+
+# 单独使用 HAR 解析器
+uv run python -c "
+from scripts.har_parser import parse_har
+from pathlib import Path
+result = parse_har(Path('path/to/your.har'), Path('repo-profiles.yaml'))
+print(f'解析到 {len(result.endpoints)} 个接口')
+print(result.model_dump_json(indent=2))
+"
+
+# 单独使用项目脚手架生成
+uv run python -c "
+from scripts.scaffold import ScaffoldConfig, generate_project
+from pathlib import Path
+config = ScaffoldConfig(
+    project_root=Path('/path/to/your-project'),
+    project_name='mytest',
+    base_url='http://your-server:8080',
+    db_configured=True,
+)
+created = generate_project(config)
+print(f'已创建 {len(created)} 个文件')
+"
+
+# 单独使用通知器
+uv run python -c "
+from scripts.notifier import NotificationPayload, send_notification
+payload = NotificationPayload(title='测试完成', body='通过: 87, 失败: 3')
+send_notification('dingtalk', 'https://oapi.dingtalk.com/robot/send?access_token=xxx', payload)
+"
+```
+
+> 注意：纯脚本模式只提供基础工具能力（HAR 解析、脚手架、通知），不包含 AI 驱动的场景分析和用例生成。完整的 AI 工作流需要通过 Claude Code 使用。
+
+---
+
+## 使用
 
 ### 步骤 1：初始化项目环境
 
@@ -183,12 +360,6 @@ cp -r skills/* ~/.claude/skills/
 /using-autoflow
 ```
 
-向导将引导你完成：
-- Python 3.12+ 与 uv 环境检测
-- 目标仓库配置（`repo-profiles.yaml`）
-- 数据库与服务连接配置（`.env`）
-- 测试项目脚手架生成
-
 ### 步骤 2：录制 HAR 文件
 
 在浏览器开发者工具（Network 面板）中操作目标系统，导出 `.har` 文件。
@@ -196,138 +367,68 @@ cp -r skills/* ~/.claude/skills/
 ### 步骤 3：生成测试套件
 
 ```
-/autoflow ./recordings/checkout-flow.har
+/autoflow ./recordings/api.har
 ```
 
-**带参数示例：**
+**常用参数：**
 
-```
-# 指定目标模块，跳过 L5 AI 推断（节省 token）
-/autoflow ./recordings/user-api.har --module user --skip-l5
+```bash
+# 跳过确认清单，直接生成（快速模式）
+/autoflow ./api.har --quick
 
 # 恢复上次中断的会话
 /autoflow --resume
-
-# 只生成场景清单，不生成代码（用于预览）
-/autoflow ./recordings/order.har --dry-run
 ```
 
 ---
 
-## Configuration（配置）
+## 配置
 
 ### repo-profiles.yaml
 
-定义需要同步和分析的源码仓库：
+定义 API 接口路径与后端源码仓库的映射关系：
 
 ```yaml
-# repo-profiles.yaml
 profiles:
-  - name: backend-api          # 仓库标识，用于 --module 参数
-    repo_url: git@github.com:your-org/backend.git
-    branch: main
-    source_root: src/main/java  # 源码根目录（相对仓库根）
-    patterns:                   # 需要追踪的包路径模式
-      - "com.example.api.controller"
-      - "com.example.api.service"
-      - "com.example.api.dao"
-    language: java              # java | python | typescript | go
-    db_schema_path: docs/schema.sql  # 可选：数据库 schema 文件路径
-```
+  - name: dt-center-assets               # 仓库标识名
+    path: .repos/CustomItem/dt-center-assets  # 本地克隆路径
+    branch: release_6.2.x                # 跟踪分支
+    url_prefixes:                         # 该仓库处理的 API 路径前缀
+      - /dassets/v1/
+    modules:                              # 可选：源码模块匹配模式
+      - pattern: "com.dtstack.assets.controller"
+        description: "控制器层"
+      - pattern: "com.dtstack.assets.service"
+        description: "服务层"
 
-完整字段说明见 [docs/repo-profiles-schema.md](docs/repo-profiles-schema.md)。
+  - name: dt-center-metadata
+    path: .repos/CustomItem/dt-center-metadata
+    branch: release_6.2.x
+    url_prefixes:
+      - /dmetadata/v1/
+
+db:                                       # 可选：数据库连接（L4 断言需要）
+  host: 172.16.115.247
+  port: 3306
+  user: root
+  password: "${DB_PASSWORD}"              # 引用 .env 中的变量
+  database: dtinsight
+
+notifications:                            # 可选：外部通知
+  - type: dingtalk                        # dingtalk / feishu / slack / custom
+    webhook: "${DINGTALK_WEBHOOK}"
+```
 
 ### 环境变量（.env）
 
 | 变量名 | 必填 | 说明 |
 |--------|------|------|
-| `ANTHROPIC_API_KEY` | 是 | Anthropic API 密钥 |
-| `TEST_BASE_URL` | 是 | 被测服务基础 URL，如 `http://localhost:8080` |
-| `DB_HOST` | 否 | 数据库主机（L4 数据库验证需要） |
-| `DB_PORT` | 否 | 数据库端口 |
-| `DB_NAME` | 否 | 数据库名称 |
-| `DB_USER` | 否 | 数据库用户名 |
-| `DB_PASSWORD` | 否 | 数据库密码 |
-| `NOTIFY_WEBHOOK_URL` | 否 | Wave 4 完成后的 Webhook 通知地址 |
-| `NOTIFY_CHANNEL` | 否 | 通知渠道：`slack` \| `dingtalk` \| `feishu` |
-
----
-
-## Project Structure（生成的项目结构）
-
-`/autoflow` 执行完成后，工作目录结构如下：
-
-```
-<your-test-project>/
-├── conftest.py                  # pytest fixtures（认证、客户端、数据库连接）
-├── pyproject.toml               # 项目依赖与工具配置
-├── .env                         # 环境变量（已加入 .gitignore）
-├── repo-profiles.yaml           # 仓库配置
-│
-├── tests/
-│   ├── __init__.py
-│   ├── test_<module>_list.py    # 列表查询测试（L1-L5）
-│   ├── test_<module>_detail.py  # 详情查询测试
-│   ├── test_<module>_create.py  # 创建操作测试
-│   ├── test_<module>_update.py  # 更新操作测试
-│   ├── test_<module>_delete.py  # 删除操作测试
-│   └── test_<module>_edge.py    # 边界与异常场景测试
-│
-├── models/
-│   └── <module>.py              # Pydantic 响应模型（自动生成）
-│
-├── utils/
-│   ├── auth.py                  # 认证工具函数
-│   ├── db.py                    # 数据库辅助函数（L4 验证）
-│   └── assertions.py            # 自定义断言辅助函数
-│
-└── reports/
-    └── .gitkeep                 # Allure/pytest-html 报告输出目录
-```
-
----
-
-## Development（开发）
-
-### Prerequisites
-
-- Python 3.12+
-- [uv](https://docs.astral.sh/uv/) 包管理器
-- [Claude Code](https://claude.ai/code)
-
-### 本地开发
-
-```bash
-# 克隆并安装依赖
-git clone https://github.com/your-org/sisyphus-auto-flow.git
-cd sisyphus-auto-flow
-uv sync
-
-# 运行测试
-make test
-
-# 代码检查
-make lint
-
-# 类型检查
-make typecheck
-
-# 一键运行所有检查
-make check
-```
-
-### 可用的 Make 目标
-
-```bash
-make test        # 运行 pytest（含覆盖率报告）
-make lint        # 运行 ruff 代码检查
-make typecheck   # 运行 pyright 类型检查
-make format      # 运行 ruff format 格式化
-make check       # 依次运行 lint + typecheck + test
-make clean       # 清理 __pycache__、.pytest_cache 等临时文件
-```
-
-技术栈选型说明见 [references/tech-stack-options.md](references/tech-stack-options.md)。
+| `BASE_URL` | 是 | 被测服务基础 URL，如 `http://172.16.115.247` |
+| `AUTH_COOKIE` | 是 | 认证 Cookie 或 Token |
+| `DB_PASSWORD` | 否 | 数据库密码（L4 断言需要） |
+| `DINGTALK_WEBHOOK` | 否 | 钉钉机器人 Webhook 地址 |
+| `FEISHU_WEBHOOK` | 否 | 飞书机器人 Webhook 地址 |
+| `SLACK_WEBHOOK` | 否 | Slack Incoming Webhook 地址 |
 
 ---
 
@@ -343,48 +444,57 @@ graph TD
     C -->|是| E{uv?}
     E -->|否| F["提示安装"]
     E -->|是| G{已有项目?}
-    G -->|是| H["扫描现有规范"]
-    G -->|否| I["选择技术栈"]
+    G -->|是| H["扫描现有规范\n不覆盖已有配置"]
+    G -->|否| I["选择技术栈\nA=推荐 / B=经典 / C=自定义"]
     H --> J["Step 3: 仓库配置"]
     I --> J
-    J --> K["Step 4: 连接配置"]
+    J --> K["Step 4: 连接配置\nBase URL + Auth + DB(可选) + 通知(可选)"]
     K --> L["Step 5: 脚手架生成"]
     L --> M["初始化完成"]
 ```
 
-**各步骤说明：**
+---
 
-| 步骤 | 说明 |
-|------|------|
-| Step 1 环境检测 | 检查 Python 版本、uv、git 是否满足要求 |
-| Step 2 项目识别 | 判断当前目录是否已有测试项目（检测 `conftest.py`、`pyproject.toml`） |
-| Step 3 仓库配置 | 引导填写 `repo-profiles.yaml`，配置需要同步的源码仓库 |
-| Step 4 连接配置 | 引导填写 `.env`，配置被测服务 URL 和数据库连接信息 |
-| Step 5 脚手架生成 | 生成 `conftest.py`、`pyproject.toml`、目录结构、`.gitignore` |
+## 开发
+
+### 本地开发
+
+```bash
+git clone https://github.com/koco-co/sisyphus-autoflow.git
+cd sisyphus-autoflow
+uv sync --dev
+
+make test       # 运行测试（含覆盖率）
+make lint       # ruff 代码检查
+make typecheck  # pyright 类型检查
+make ci         # 一键运行 lint + typecheck + test
+make fmt        # 代码格式化
+```
+
+技术栈选型说明见 [references/tech-stack-options.md](references/tech-stack-options.md)。
 
 ---
 
 ## Roadmap
 
-| 版本 | 状态 | 主要特性 |
-|------|------|---------|
-| v0.1.0 | 已完成 | HAR 解析、场景生成、基础 L1-L3 断言、pytest 输出 |
-| v0.2.0 | 进行中 | L4 数据库验证、CRUD 一致性检查、检查点恢复 |
-| v0.3.0 | 计划中 | L5 AI 推断断言、安全边界检测 |
-| v0.4.0 | 计划中 | 多语言后端支持（TypeScript、Go） |
-| v0.5.0 | 计划中 | CI 集成、GitHub Actions 模板 |
-| v1.0.0 | 计划中 | 完整文档、稳定 API、社区版发布 |
+| 版本 | 主要特性 |
+|------|---------|
+| v1.0.0（当前） | HAR 解析、4 波编排、L1-L5 全层断言、DB 验证、检查点恢复、外部通知、双发布 |
+| v1.1.0 | 多语言后端支持（TypeScript、Go、Python 后端） |
+| v1.2.0 | OpenAPI/Swagger spec 作为补充输入源 |
+| v1.3.0 | 测试数据工厂（自动生成测试数据 fixtures） |
+| v2.0.0 | UI 自动化集成（Playwright）、性能测试 |
 
 ---
 
 ## Contributing
 
-欢迎贡献代码、文档和测试用例！请先阅读 [CONTRIBUTING.md](CONTRIBUTING.md)（待补充）。
+欢迎贡献代码、文档和测试用例！
 
 提交 PR 前请确保：
 
 ```bash
-make check   # 所有检查通过
+make ci   # 所有检查通过
 ```
 
 ---
