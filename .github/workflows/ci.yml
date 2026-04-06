@@ -1,0 +1,20 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --dev
+      - run: uv run ruff check scripts/ tests/
+      - run: uv run ruff format --check scripts/ tests/
+      - run: uv run pyright scripts/
+      - run: uv run pytest tests/ -v --cov=scripts --cov-report=xml
+      - uses: codecov/codecov-action@v4
+        if: matrix.python-version == '3.13'
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
