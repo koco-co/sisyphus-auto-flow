@@ -28,11 +28,13 @@ class TestParseRepoUrl:
 
 class TestLoadProfiles:
     def test_loads_yaml(self, sample_repo_profiles_path: Path):
+        """从 YAML 文件加载 profiles 并验证条目数量和内容。"""
         profiles = load_profiles(sample_repo_profiles_path)
         assert len(profiles) == 2
         assert profiles[0]["name"] == "dt-center-assets"
 
     def test_returns_empty_on_missing(self, tmp_path: Path):
+        """文件不存在时应返回空列表。"""
         missing = tmp_path / "nonexistent.yaml"
         result = load_profiles(missing)
         assert result == []
@@ -40,8 +42,9 @@ class TestLoadProfiles:
 
 class TestSyncRepo:
     def test_clone_new_repo(self, tmp_path: Path):
+        """repo_path 不含 .git 时应执行克隆操作。"""
         repo_path = tmp_path / "new_repo"
-        # repo_path does not have .git → should clone
+        # repo_path 不含 .git → 应克隆
 
         mock_result = MagicMock()
         mock_result.stdout = "abc1234\n"
@@ -51,12 +54,13 @@ class TestSyncRepo:
             status = sync_repo(repo_path, repo_url="https://git.example.com/org/repo.git", branch="main")
 
         assert status.success is True
-        # First call should be git clone
+        # 第一次调用应为 git clone
         first_call_args = mock_run.call_args_list[0][0][0]
         assert first_call_args[0] == "git"
         assert first_call_args[1] == "clone"
 
     def test_pull_existing_repo(self, tmp_path: Path):
+        """repo_path 已含 .git 时应执行拉取操作。"""
         repo_path = tmp_path / "existing_repo"
         repo_path.mkdir()
         (repo_path / ".git").mkdir()
@@ -69,7 +73,7 @@ class TestSyncRepo:
             status = sync_repo(repo_path, branch="main")
 
         assert status.success is True
-        # Should call fetch, checkout, pull (not clone)
+        # 应调用 fetch、checkout、pull（而非 clone）
         all_calls = [call[0][0] for call in mock_run.call_args_list]
         subcommands = [args[1] for args in all_calls]
         assert "fetch" in subcommands
@@ -79,6 +83,7 @@ class TestSyncRepo:
 
 class TestSyncAll:
     def test_syncs_all_profiles(self, sample_repo_profiles_path: Path, tmp_path: Path):
+        """sync_all 应对 profiles 中的每个仓库调用一次 sync_repo。"""
         fake_status = RepoStatus(name="fake", success=True, head_commit="abc1234")
 
         with patch("scripts.repo_sync.sync_repo", return_value=fake_status) as mock_sync:

@@ -1,4 +1,4 @@
-"""Pytest execution wrapper with result parsing."""
+"""Pytest 执行包装器，含结果解析功能。"""
 import re
 import subprocess
 from dataclasses import dataclass
@@ -21,7 +21,7 @@ def build_pytest_command(
     allure_dir: Path | None = None,
     extra_args: list[str] | None = None,
 ) -> list[str]:
-    """Build a pytest command list for subprocess execution."""
+    """构建用于子进程执行的 pytest 命令列表。"""
     cmd = ["uv", "run", "pytest", str(test_path), "-v"]
 
     if collect_only:
@@ -37,7 +37,7 @@ def build_pytest_command(
 
 
 def parse_pytest_output(output: str, return_code: int) -> TestResult:
-    """Parse pytest stdout into a TestResult dataclass."""
+    """将 pytest 标准输出解析为 TestResult 数据类。"""
     counts: dict[str, int] = {"passed": 0, "failed": 0, "skipped": 0, "error": 0}
 
     for match in re.finditer(r"(\d+) (passed|failed|skipped|error)", output):
@@ -61,7 +61,7 @@ def run_tests(
     allure_dir: Path | None = None,
     timeout: int = 300,
 ) -> TestResult:
-    """Execute pytest and return a parsed TestResult."""
+    """执行 pytest 并返回解析后的 TestResult。"""
     cmd = build_pytest_command(test_path, collect_only=collect_only, allure_dir=allure_dir)
 
     try:

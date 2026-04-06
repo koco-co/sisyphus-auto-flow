@@ -19,18 +19,18 @@ from scripts.state_manager import (
 
 class TestInitSession:
     def test_creates_state_file(self, tmp_path: Path) -> None:
-        """init_session creates .autoflow/state.json in the project root."""
+        """init_session 在项目根目录下创建 .autoflow/state.json。"""
         init_session(tmp_path, "test.har")
         state_file = tmp_path / ".autoflow" / "state.json"
         assert state_file.exists()
 
     def test_state_has_session_id(self, tmp_path: Path) -> None:
-        """session_id starts with 'af_'."""
+        """session_id 以 'af_' 开头。"""
         state = init_session(tmp_path, "test.har")
         assert state.session_id.startswith("af_")
 
     def test_initial_wave_is_zero(self, tmp_path: Path) -> None:
-        """current_wave == 0 and all 4 waves are PENDING."""
+        """current_wave == 0 且全部 4 个波次均为 PENDING 状态。"""
         state = init_session(tmp_path, "test.har")
         assert state.current_wave == 0
         assert len(state.waves) == 4
@@ -39,7 +39,7 @@ class TestInitSession:
             assert state.waves[key].status == WaveStatus.PENDING
 
     def test_raises_on_existing_session(self, tmp_path: Path) -> None:
-        """A second init_session call raises ValueError containing 'existing session'."""
+        """第二次调用 init_session 应抛出包含 'existing session' 的 ValueError。"""
         init_session(tmp_path, "test.har")
         with pytest.raises(ValueError, match="existing session"):
             init_session(tmp_path, "test.har")
@@ -52,7 +52,7 @@ class TestInitSession:
 
 class TestAdvanceWave:
     def test_advances_to_next_wave(self, tmp_path: Path) -> None:
-        """After init, advance_wave(1) sets current_wave=1 and wave '1' COMPLETED."""
+        """初始化后，advance_wave(1) 应将 current_wave 设为 1 并将波次 '1' 标记为 COMPLETED。"""
         init_session(tmp_path, "test.har")
         data = {"agents": ["agent_a"], "results": "ok"}
         state = advance_wave(tmp_path, 1, data=data)
@@ -63,7 +63,7 @@ class TestAdvanceWave:
         assert state.waves["1"].data == data
 
     def test_raises_on_out_of_order(self, tmp_path: Path) -> None:
-        """After init (current_wave=0), advance_wave(3) raises ValueError('out of order')."""
+        """初始化后（current_wave=0），advance_wave(3) 应抛出包含 'out of order' 的 ValueError。"""
         init_session(tmp_path, "test.har")
         with pytest.raises(ValueError, match="out of order"):
             advance_wave(tmp_path, 3)
@@ -76,7 +76,7 @@ class TestAdvanceWave:
 
 class TestResumeSession:
     def test_returns_state(self, tmp_path: Path) -> None:
-        """After init+advance(1), resume returns state with current_wave=1."""
+        """初始化并推进波次 1 后，resume 应返回 current_wave=1 的状态。"""
         init_session(tmp_path, "test.har")
         advance_wave(tmp_path, 1)
         state = resume_session(tmp_path)
@@ -85,7 +85,7 @@ class TestResumeSession:
         assert state.current_wave == 1
 
     def test_returns_none_when_no_session(self, tmp_path: Path) -> None:
-        """When no state.json exists, resume returns None."""
+        """当 state.json 不存在时，resume 应返回 None。"""
         result = resume_session(tmp_path)
         assert result is None
 
@@ -97,7 +97,7 @@ class TestResumeSession:
 
 class TestArchiveSession:
     def test_moves_to_history(self, tmp_path: Path) -> None:
-        """After full run (init + 4 advances), archive moves files to history/{session_id}/."""
+        """完整运行（init + 4 次推进）后，archive 应将文件移动到 history/{session_id}/。"""
         state = init_session(tmp_path, "test.har")
         session_id = state.session_id
 
@@ -109,7 +109,7 @@ class TestArchiveSession:
         assert history_dir is not None
         assert history_dir == tmp_path / ".autoflow" / "history" / session_id
         assert history_dir.exists()
-        # state.json should have moved to history
+        # state.json 应已移动到 history 目录
         assert (history_dir / "state.json").exists()
-        # state.json should no longer be at original location
+        # state.json 不应再存在于原始位置
         assert not (tmp_path / ".autoflow" / "state.json").exists()

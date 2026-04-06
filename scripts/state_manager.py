@@ -1,4 +1,4 @@
-"""Wave checkpoint state manager for sisyphus-autoflow sessions."""
+"""sisyphus-autoflow 会话的波次检查点状态管理器。"""
 
 import shutil
 from datetime import UTC, datetime
@@ -8,7 +8,7 @@ from pathlib import Path
 from pydantic import BaseModel
 
 # ---------------------------------------------------------------------------
-# Enums & Models
+# 枚举与模型定义
 # ---------------------------------------------------------------------------
 
 
@@ -41,7 +41,7 @@ class SessionState(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Private helpers
+# 私有辅助函数
 # ---------------------------------------------------------------------------
 
 
@@ -74,15 +74,15 @@ def _write_state(project_root: Path, state: SessionState) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Public API
+# 公开 API
 # ---------------------------------------------------------------------------
 
 
 def init_session(project_root: Path, har_filename: str) -> SessionState:
-    """Create a new autoflow session with 4 pending waves.
+    """创建包含 4 个待执行波次的新 autoflow 会话。
 
     Raises:
-        ValueError: If a session already exists in project_root.
+        ValueError: 若 project_root 中已存在会话。
     """
     state_dir = _state_dir(project_root)
     state_dir.mkdir(parents=True, exist_ok=True)
@@ -115,15 +115,15 @@ def advance_wave(
     wave: int,
     data: dict | None = None,
 ) -> SessionState:
-    """Advance the session to the next wave, marking it COMPLETED.
+    """将会话推进到下一个波次，并将当前波次标记为已完成。
 
     Args:
-        project_root: Root directory containing .autoflow/.
-        wave: The wave number to complete (must equal current_wave + 1).
-        data: Optional result data to store with the wave.
+        project_root: 包含 .autoflow/ 的根目录。
+        wave: 要完成的波次编号（必须等于 current_wave + 1）。
+        data: 可选的结果数据，用于与波次一同存储。
 
     Raises:
-        ValueError: If no session exists or wave is out of order.
+        ValueError: 若不存在会话或波次顺序有误。
     """
     state = _read_state(project_root)
     if state is None:
@@ -157,15 +157,15 @@ def advance_wave(
 
 
 def resume_session(project_root: Path) -> SessionState | None:
-    """Load and return the current session state, or None if none exists."""
+    """加载并返回当前会话状态，若无会话则返回 None。"""
     return _read_state(project_root)
 
 
 def archive_session(project_root: Path) -> Path | None:
-    """Move all .autoflow files (except history/) into .autoflow/history/{session_id}/.
+    """将所有 .autoflow 文件（history/ 除外）移动到 .autoflow/history/{session_id}/。
 
     Returns:
-        The history directory path, or None if no active session.
+        历史目录路径，若无活跃会话则返回 None。
     """
     state = _read_state(project_root)
     if state is None:

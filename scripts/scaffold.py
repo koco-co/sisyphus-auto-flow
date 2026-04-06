@@ -1,4 +1,4 @@
-"""Scaffold generator — creates a new project directory from Jinja2 templates."""
+"""脚手架生成器 — 从 Jinja2 模板创建新的项目目录结构。"""
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -7,7 +7,7 @@ from jinja2 import Environment, FileSystemLoader
 TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
 
 _CLIENT_PY = '''\
-"""HTTP client — immutable wrapper around httpx."""
+"""HTTP 客户端 — httpx 的不可变封装。"""
 from dataclasses import dataclass, field
 import httpx
 
@@ -38,7 +38,7 @@ class APIClient:
 '''
 
 _ASSERTIONS_PY = '''\
-"""L1-L5 assertion helpers."""
+"""L1-L5 断言辅助函数。"""
 import httpx
 
 def assert_protocol(  # noqa: E501
@@ -56,7 +56,7 @@ def assert_protocol(  # noqa: E501
 '''
 
 _DB_PY = '''\
-"""Database query helper — read-only, for assertion verification."""
+"""数据库查询辅助类 — 只读，用于断言验证。"""
 from dataclasses import dataclass
 import pymysql
 from urllib.parse import urlparse
@@ -151,9 +151,9 @@ class ScaffoldConfig:
 
 
 def _write_if_not_exists(path: Path, content: str) -> bool:
-    """Write content to path only if the file does not already exist.
+    """仅在文件不存在时才将内容写入指定路径。
 
-    Returns True if the file was written, False if it already existed.
+    若文件被写入则返回 True，若文件已存在则返回 False。
     """
     if path.exists():
         return False
@@ -162,14 +162,14 @@ def _write_if_not_exists(path: Path, content: str) -> bool:
 
 
 def generate_project(config: ScaffoldConfig) -> list[str]:
-    """Generate a scaffold project from templates.
+    """从模板生成脚手架项目。
 
-    Returns a list of file paths (relative to project_root) that were created.
+    返回已创建的文件路径列表（相对于 project_root）。
     """
     root = config.project_root
     created: list[str] = []
 
-    # 1. Create directories
+    # 1. 创建目录结构
     dirs = [
         "tests/interface",
         "tests/scenariotest",
@@ -182,7 +182,7 @@ def generate_project(config: ScaffoldConfig) -> list[str]:
     for d in dirs:
         (root / d).mkdir(parents=True, exist_ok=True)
 
-    # 2. Render Jinja2 templates
+    # 2. 渲染 Jinja2 模板
     env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)), keep_trailing_newline=True)
     template_vars = {
         "project_name": config.project_name,
@@ -198,13 +198,13 @@ def generate_project(config: ScaffoldConfig) -> list[str]:
     if _write_if_not_exists(root / "tests" / "conftest.py", conftest_content):
         created.append("tests/conftest.py")
 
-    # 3. Copy .env.example as-is
+    # 3. 原样复制 .env.example
     env_example_src = TEMPLATES_DIR / ".env.example"
     env_example_dst = root / ".env.example"
     if _write_if_not_exists(env_example_dst, env_example_src.read_text()):
         created.append(".env.example")
 
-    # 4. Static __init__.py files
+    # 4. 静态 __init__.py 文件
     init_files = [
         "core/__init__.py",
         "core/models/__init__.py",
@@ -224,7 +224,7 @@ def generate_project(config: ScaffoldConfig) -> list[str]:
     if _write_if_not_exists(root / "core" / "assertions.py", _ASSERTIONS_PY):
         created.append("core/assertions.py")
 
-    # 7. core/db.py (only when db_configured)
+    # 7. core/db.py（仅在配置了数据库时创建）
     if config.db_configured and _write_if_not_exists(root / "core" / "db.py", _DB_PY):
         created.append("core/db.py")
 

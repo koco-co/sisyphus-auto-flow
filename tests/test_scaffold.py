@@ -21,6 +21,7 @@ class TestGenerateProject:
         )
 
     def test_creates_directory_structure(self, tmp_path: Path) -> None:
+        """应创建完整的测试和核心目录结构。"""
         config = self._make_config(tmp_path)
         generate_project(config)
 
@@ -31,6 +32,7 @@ class TestGenerateProject:
         assert (tmp_path / "core" / "models").is_dir()
 
     def test_creates_pyproject_toml(self, tmp_path: Path) -> None:
+        """应生成包含项目名称且不含 pymysql 的 pyproject.toml。"""
         config = self._make_config(tmp_path, project_name="billing")
         generate_project(config)
 
@@ -39,6 +41,7 @@ class TestGenerateProject:
         assert "pymysql" not in content
 
     def test_includes_pymysql_when_db_configured(self, tmp_path: Path) -> None:
+        """配置数据库时，pyproject.toml 应包含 pymysql。"""
         config = self._make_config(tmp_path, db_configured=True)
         generate_project(config)
 
@@ -46,12 +49,14 @@ class TestGenerateProject:
         assert "pymysql" in content
 
     def test_creates_conftest(self, tmp_path: Path) -> None:
+        """应创建 tests/conftest.py 文件。"""
         config = self._make_config(tmp_path)
         generate_project(config)
 
         assert (tmp_path / "tests" / "conftest.py").is_file()
 
     def test_creates_core_files(self, tmp_path: Path) -> None:
+        """应创建核心模块文件：__init__.py、client.py、assertions.py。"""
         config = self._make_config(tmp_path)
         generate_project(config)
 
@@ -61,8 +66,9 @@ class TestGenerateProject:
         assert (tmp_path / "core" / "models" / "__init__.py").is_file()
 
     def test_does_not_overwrite_existing(self, tmp_path: Path) -> None:
+        """已存在的文件不应被覆盖。"""
         config = self._make_config(tmp_path)
-        # pre-create pyproject.toml with sentinel content
+        # 预先创建包含哨兵内容的 pyproject.toml
         (tmp_path / "pyproject.toml").write_text("existing content")
         generate_project(config)
 
@@ -70,6 +76,7 @@ class TestGenerateProject:
         assert content == "existing content"
 
     def test_creates_gitignore(self, tmp_path: Path) -> None:
+        """应创建包含常用忽略规则的 .gitignore 文件。"""
         config = self._make_config(tmp_path)
         generate_project(config)
 
@@ -79,6 +86,7 @@ class TestGenerateProject:
         assert ".env" in content
 
     def test_creates_makefile(self, tmp_path: Path) -> None:
+        """应创建包含标准测试目标的 Makefile。"""
         config = self._make_config(tmp_path)
         generate_project(config)
 

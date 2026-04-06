@@ -12,7 +12,7 @@ from scripts.notifier import (
 )
 
 # ---------------------------------------------------------------------------
-# Helpers
+# 辅助函数
 # ---------------------------------------------------------------------------
 
 TITLE = "Deploy succeeded"
@@ -30,6 +30,7 @@ def make_payload(title: str = TITLE, body: str = BODY) -> NotificationPayload:
 
 class TestFormatDingtalk:
     def test_markdown_format(self) -> None:
+        """应生成包含标题和正文的 markdown 格式消息。"""
         payload = make_payload()
         msg = format_dingtalk(payload)
 
@@ -38,6 +39,7 @@ class TestFormatDingtalk:
         assert BODY in msg["markdown"]["text"]
 
     def test_truncates_long_body(self) -> None:
+        """超长正文应被截断至不超过 5000 个字符。"""
         long_body = "x" * 10_000
         payload = make_payload(body=long_body)
         msg = format_dingtalk(payload)
@@ -52,6 +54,7 @@ class TestFormatDingtalk:
 
 class TestFormatFeishu:
     def test_card_format(self) -> None:
+        """应生成包含标题的飞书卡片格式消息。"""
         payload = make_payload()
         msg = format_feishu(payload)
 
@@ -66,6 +69,7 @@ class TestFormatFeishu:
 
 class TestFormatSlack:
     def test_blocks_format(self) -> None:
+        """应生成包含标题的 Slack blocks 格式消息。"""
         payload = make_payload()
         msg = format_slack(payload)
 
@@ -80,6 +84,7 @@ class TestFormatSlack:
 
 class TestSendNotification:
     def test_sends_dingtalk(self) -> None:
+        """成功发送钉钉通知时应返回 True。"""
         payload = make_payload()
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -91,6 +96,7 @@ class TestSendNotification:
         mock_post.assert_called_once()
 
     def test_returns_false_on_failure(self) -> None:
+        """网络异常时应返回 False。"""
         payload = make_payload()
 
         with patch("scripts.notifier.httpx.post", side_effect=Exception("network error")):
@@ -99,6 +105,7 @@ class TestSendNotification:
         assert result is False
 
     def test_unknown_channel_raises_value_error(self) -> None:
+        """未知渠道应抛出包含 'Unknown channel' 的 ValueError。"""
         payload = make_payload()
 
         with pytest.raises(ValueError, match="Unknown channel"):

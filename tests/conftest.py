@@ -1,4 +1,4 @@
-"""Shared test fixtures for plugin unit tests."""
+"""插件单元测试的公共测试夹具。"""
 from pathlib import Path
 
 import pytest

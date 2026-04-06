@@ -1,4 +1,4 @@
-"""Repository sync utilities for cloning and pulling git repos."""
+"""用于克隆和拉取 git 仓库的同步工具函数。"""
 
 import re
 import subprocess
@@ -17,9 +17,9 @@ class RepoStatus:
 
 
 def parse_repo_url(url: str) -> tuple[str, str]:
-    """Parse a git repo URL into (group, repo_name).
+    """将 git 仓库 URL 解析为 (group, repo_name)。
 
-    Supports HTTPS and SSH formats. Raises ValueError if the URL cannot be parsed.
+    支持 HTTPS 和 SSH 格式。若 URL 无法解析则抛出 ValueError。
     """
     https_pattern = re.compile(r"https?://[^/]+/(.+)/([^/]+?)(?:\.git)?$")
     ssh_pattern = re.compile(r"git@[^:]+:(.+)/([^/]+?)(?:\.git)?$")
@@ -33,9 +33,9 @@ def parse_repo_url(url: str) -> tuple[str, str]:
 
 
 def load_profiles(profiles_path: Path) -> list[dict]:
-    """Load repo profiles from a YAML file.
+    """从 YAML 文件中加载仓库 profiles。
 
-    Returns an empty list if the file does not exist.
+    若文件不存在则返回空列表。
     """
     if not profiles_path.exists():
         return []
@@ -47,11 +47,11 @@ def load_profiles(profiles_path: Path) -> list[dict]:
 
 
 def sync_repo(repo_path: Path, repo_url: str = "", branch: str = "main") -> RepoStatus:
-    """Clone or pull a git repository.
+    """克隆或拉取一个 git 仓库。
 
-    If .git exists at repo_path, performs fetch + checkout + pull.
-    Otherwise, clones the repo from repo_url into repo_path.
-    Returns a RepoStatus with the result.
+    若 repo_path 下已存在 .git，则执行 fetch + checkout + pull。
+    否则，从 repo_url 克隆仓库到 repo_path。
+    返回包含操作结果的 RepoStatus。
     """
     name = repo_path.name
 
@@ -102,9 +102,9 @@ def sync_repo(repo_path: Path, repo_url: str = "", branch: str = "main") -> Repo
 
 
 def sync_all(profiles_path: Path, project_root: Path) -> list[RepoStatus]:
-    """Sync all repositories defined in the profiles YAML.
+    """同步 profiles YAML 中定义的所有仓库。
 
-    Returns a list of RepoStatus for each profile.
+    返回每个 profile 对应的 RepoStatus 列表。
     """
     profiles = load_profiles(profiles_path)
     results: list[RepoStatus] = []
