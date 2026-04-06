@@ -1,129 +1,129 @@
 ---
 name: autoflow
-description: "Generate pytest test suites from HAR files with source-aware AI analysis. Triggers on: /autoflow <har-path>, 'generate tests from HAR', providing a .har file path."
+description: "从 HAR 文件生成 pytest 测试套件，结合源码进行 AI 智能分析。触发方式：/autoflow <har-path>、'从 HAR 生成测试'、提供 .har 文件路径。"
 argument-hint: "<har-file-path> [--quick] [--resume]"
 user-invocable: true
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Agent, AskUserQuestion
 ---
 
-# AutoFlow: HAR-to-Pytest Generation Skill
+# AutoFlow：HAR 转 Pytest 测试生成技能
 
-Transforms a browser HAR capture into a full pytest test suite using a
-four-wave orchestration pipeline: parse, analyze, generate, review.
+将浏览器 HAR 抓包文件转换为完整的 pytest 测试套件，
+采用四波次编排流水线：解析、分析、生成、评审。
 
 ---
 
-## Pre-flight Checks
+## 预检阶段
 
-Parse `$ARGUMENTS` to extract:
-- `har_path` — first positional argument (required)
-- `--quick` — skip Wave 2 user confirmation
-- `--resume` — resume from the last saved checkpoint
+解析 `$ARGUMENTS`，提取以下参数：
+- `har_path` — 第一个位置参数（必填）
+- `--quick` — 跳过第二波次的用户确认
+- `--resume` — 从上次保存的检查点恢复
 
-**1. Environment check**
+**1. 环境检查**
 
 ```bash
 test -f repo-profiles.yaml || echo "MISSING"
 ```
 
-If `repo-profiles.yaml` is missing:
+若 `repo-profiles.yaml` 不存在：
 
 ```
-AutoFlow requires an initialized project.
-Run /using-autoflow first, then retry.
+AutoFlow 需要已初始化的项目。
+请先运行 /using-autoflow，再重试。
 ```
 
-Stop immediately.
+立即终止。
 
-**2. Resume check**
+**2. 恢复检查**
 
 ```bash
 test -f .autoflow/state.json && cat .autoflow/state.json
 ```
 
-If `state.json` exists and `--resume` is not already set:
+若 `state.json` 存在且未设置 `--resume`：
 
 ```
 AskUserQuestion(
-  "An interrupted session was found (wave <N>, HAR: <har>).\n"
-  "How would you like to proceed?\n"
-  "A) Resume from wave <N>\n"
-  "B) Restart from scratch\n"
-  "C) View session summary only"
+  "发现中断的会话（波次 <N>，HAR：<har>）。\n"
+  "请选择处理方式：\n"
+  "A) 从波次 <N> 继续\n"
+  "B) 重新开始\n"
+  "C) 仅查看会话摘要"
 )
 ```
 
-Handle each choice before continuing.
+处理完各选项后再继续。
 
-**3. HAR validation**
+**3. HAR 校验**
 
 ```bash
 python3 -c "
 import json, sys
 data = json.load(open('${har_path}'))
-assert 'log' in data and 'entries' in data['log'], 'Invalid HAR'
+assert 'log' in data and 'entries' in data['log'], '无效的 HAR 文件'
 print(f'entries: {len(data[\"log\"][\"entries\"])}')
 "
 ```
 
-If validation fails, print a clear error and stop.
+若校验失败，打印明确的错误信息并终止。
 
-**4. Argument summary**
+**4. 参数摘要**
 
-Print confirmed inputs:
+打印已确认的输入信息：
 
 ```
-HAR file:  <path>  (<N> entries)
-Mode:      quick=<yes/no>  resume=<yes/no>
+HAR 文件：  <path>  （<N> 条记录）
+模式：      quick=<是/否>  resume=<是/否>
 ```
 
 ---
 
-## Wave 1: Parse & Prepare (Parallel)
+## 第一波次：解析与准备（并行）
 
-Initialize the session state file:
+初始化会话状态文件：
 
 ```bash
 python3 scripts/state_manager.py init --har "${har_path}"
 ```
 
-Launch two agents **in parallel** (single message, two Agent calls):
+**并行**启动两个 Agent（单条消息，两次 Agent 调用）：
 
 ```
 Agent(
   name="har-parser",
-  description="Parse HAR file into structured request/response data",
+  description="将 HAR 文件解析为结构化的请求/响应数据",
   model="claude-haiku-4-5",
   prompt="
-    Read the HAR file at: ${har_path}
-    Also read: prompts/har-parse-rules.md
-    Parse all entries into .autoflow/parsed.json:
-      - method, url, status, request headers/body, response body
-      - group by service (use repo-profiles.yaml url_prefixes for mapping)
-    Write .autoflow/parsed.json and exit.
+    读取 HAR 文件：${har_path}
+    同时读取：prompts/har-parse-rules.md
+    将所有条目解析写入 .autoflow/parsed.json：
+      - method、url、status、请求头/请求体、响应体
+      - 按服务分组（使用 repo-profiles.yaml 中的 url_prefixes 进行映射）
+    写入 .autoflow/parsed.json 后退出。
   "
 )
 
 Agent(
   name="repo-syncer",
-  description="Sync source repositories and build code index",
+  description="同步源码仓库并构建代码索引",
   model="claude-haiku-4-5",
   prompt="
-    Read repo-profiles.yaml.
-    For each repo in the list:
-      - Run: git -C <local_path> pull --ff-only
-      - Collect: module names, class names, route decorators
-    Write .autoflow/repo-status.json:
+    读取 repo-profiles.yaml。
+    对列表中的每个仓库：
+      - 运行：git -C <local_path> pull --ff-only
+      - 收集：模块名、类名、路由装饰器
+    写入 .autoflow/repo-status.json：
       { repo: string, branch: string, synced: bool, modules: string[] }
-    Exit when done.
+    完成后退出。
   "
 )
 ```
 
-Wait for both agents to complete. Read `.autoflow/parsed.json` and
-`.autoflow/repo-status.json` to verify output before continuing.
+等待两个 Agent 均完成。读取 `.autoflow/parsed.json` 和
+`.autoflow/repo-status.json`，验证输出正确后再继续。
 
-Checkpoint:
+检查点：
 
 ```bash
 python3 scripts/state_manager.py advance_wave --wave 1
@@ -131,23 +131,23 @@ python3 scripts/state_manager.py advance_wave --wave 1
 
 ---
 
-## Wave 2: Scenario Analysis (Sequential, Interactive)
+## 第二波次：场景分析（顺序执行，交互式）
 
-Launch the scenario analyzer (skipped with `--quick`):
+启动场景分析器（`--quick` 模式下跳过）：
 
 ```
 Agent(
   name="scenario-analyzer",
-  description="Analyze HAR traffic against source code and produce test scenarios",
+  description="对照源码分析 HAR 流量，生成测试场景",
   model="claude-opus-4-5",
   prompt="
-    Read: .autoflow/parsed.json
-    Read: repo-profiles.yaml (to locate source repos)
-    Read relevant source files from .repos/ to understand business logic.
-    Read: prompts/scenario-enrich.md
-    Read: prompts/assertion-layers.md
+    读取：.autoflow/parsed.json
+    读取：repo-profiles.yaml（用于定位源码仓库）
+    从 .repos/ 读取相关源码文件，理解业务逻辑。
+    读取：prompts/scenario-enrich.md
+    读取：prompts/assertion-layers.md
 
-    Produce .autoflow/scenarios.json:
+    生成 .autoflow/scenarios.json：
     {
       services: [
         {
@@ -168,42 +168,42 @@ Agent(
       ]
     }
 
-    AssertionLevel: L1=status, L2=schema, L3=business, L4=db, L5=side-effects
+    AssertionLevel：L1=状态码, L2=Schema, L3=业务逻辑, L4=数据库, L5=副作用
   "
 )
 ```
 
-Read `.autoflow/scenarios.json`. If `--quick` is set, skip to checkpoint.
+读取 `.autoflow/scenarios.json`。若设置了 `--quick`，直接跳到检查点。
 
-Otherwise present the confirmation checklist:
+否则展示确认清单：
 
 ```
 AskUserQuestion(
-  "=== Wave 2: Scenario Analysis Complete ===\n\n"
-  "Source repos:   <list with branch names>\n"
-  "HAR coverage:   <N> services, <M> endpoints\n\n"
-  "AI-inferred scenarios:\n"
-  "  Happy path:   <N>\n"
-  "  Error cases:  <N>\n"
-  "  Edge cases:   <N>\n\n"
-  "AI-supplemented scenarios (CRUD / boundary):\n"
-  "  Added:        <N>\n\n"
-  "Assertion levels:\n"
-  "  L1 (status):    all endpoints\n"
-  "  L2 (schema):    <N> endpoints\n"
-  "  L3 (business):  <N> endpoints\n"
-  "  L4 (db):        <N> endpoints (requires DB config)\n"
-  "  L5 (side-effects): <N> endpoints\n\n"
-  "Output files:\n"
-  "  <list from generation_plan>\n\n"
-  "Confirm and proceed? (yes / modify / cancel)"
+  "=== 第二波次：场景分析完成 ===\n\n"
+  "源码仓库：    <列表及分支名>\n"
+  "HAR 覆盖率：  <N> 个服务，<M> 个接口\n\n"
+  "AI 推断场景：\n"
+  "  正常路径：  <N> 个\n"
+  "  异常用例：  <N> 个\n"
+  "  边界用例：  <N> 个\n\n"
+  "AI 补充场景（增删改查 / 边界值）：\n"
+  "  新增：      <N> 个\n\n"
+  "断言层级：\n"
+  "  L1（状态码）：  所有接口\n"
+  "  L2（Schema）：  <N> 个接口\n"
+  "  L3（业务逻辑）：<N> 个接口\n"
+  "  L4（数据库）：  <N> 个接口（需配置数据库）\n"
+  "  L5（副作用）：  <N> 个接口\n\n"
+  "输出文件：\n"
+  "  <generation_plan 中的文件列表>\n\n"
+  "确认并继续？（yes / modify / cancel）"
 )
 ```
 
-If the user wants to modify: ask what to change, update `scenarios.json`,
-and re-present the checklist.
+若用户需要修改：询问具体变更内容，更新 `scenarios.json`，
+并重新展示确认清单。
 
-Checkpoint:
+检查点：
 
 ```bash
 python3 scripts/state_manager.py advance_wave --wave 2
@@ -211,41 +211,41 @@ python3 scripts/state_manager.py advance_wave --wave 2
 
 ---
 
-## Wave 3: Code Generation (Parallel Fan-out)
+## 第三波次：代码生成（并行扇出）
 
-Read `.autoflow/scenarios.json` → `generation_plan` array.
+读取 `.autoflow/scenarios.json` → `generation_plan` 数组。
 
-For each module in the plan, launch a parallel Agent:
+对计划中的每个模块，并行启动一个 Agent：
 
 ```
 Agent(
   name="case-writer",
-  description="Generate pytest test module for assigned endpoints",
+  description="为分配的接口生成 pytest 测试模块",
   model="claude-sonnet-4-5",
   prompt="
-    You are responsible for module: <module_name>
-    Assigned endpoints: <endpoint_ids>
+    你负责的模块：<module_name>
+    分配的接口：<endpoint_ids>
 
-    Read:
-      - .autoflow/scenarios.json  (for scenario details)
-      - .autoflow/parsed.json     (for real request/response examples)
+    读取：
+      - .autoflow/scenarios.json  （获取场景详情）
+      - .autoflow/parsed.json     （获取真实的请求/响应示例）
       - prompts/code-style-python.md
       - prompts/assertion-layers.md
-      - Source files listed under each endpoint in scenarios.json
+      - scenarios.json 中各接口对应的源码文件
 
-    Write: tests/<module_name>.py
-      - One test function per scenario
-      - Fixture-based auth and client setup
-      - Assertions at the levels specified in scenarios.json
-      - Type annotations, docstrings, no hardcoded credentials
+    写入：tests/<module_name>.py
+      - 每个场景对应一个测试函数
+      - 基于 Fixture 的认证与客户端初始化
+      - 按 scenarios.json 中指定的层级编写断言
+      - 添加类型注解和文档字符串，不硬编码凭证
   "
 )
 ```
 
-All writers run in parallel (single message, one Agent call per module).
-Wait for all to complete.
+所有代码生成器并行运行（单条消息，每个模块一次 Agent 调用）。
+等待全部完成。
 
-Checkpoint:
+检查点：
 
 ```bash
 python3 scripts/state_manager.py advance_wave --wave 3
@@ -253,21 +253,21 @@ python3 scripts/state_manager.py advance_wave --wave 3
 
 ---
 
-## Wave 4: Review + Execute + Deliver (Sequential, Interactive)
+## 第四波次：评审 + 执行 + 交付（顺序执行，交互式）
 
-**Review**
+**评审**
 
 ```
 Agent(
   name="case-reviewer",
-  description="Review all generated test files for quality and correctness",
+  description="评审所有生成的测试文件，检查质量与正确性",
   model="claude-opus-4-5",
   prompt="
-    Read all files matched by: tests/test_*.py
-    Read: prompts/review-checklist.md
-    Read: prompts/assertion-layers.md
+    读取所有匹配 tests/test_*.py 的文件
+    读取：prompts/review-checklist.md
+    读取：prompts/assertion-layers.md
 
-    Produce .autoflow/review-report.json:
+    生成 .autoflow/review-report.json：
     {
       files_reviewed: number,
       issues: [{ file, line, severity, message, suggestion }],
@@ -275,48 +275,48 @@ Agent(
       auto_fixes: [{ file, description }]
     }
 
-    Apply auto-fixable issues directly to the test files.
+    将可自动修复的问题直接应用到测试文件中。
   "
 )
 ```
 
-**Execute**
+**执行**
 
 ```bash
 python3 scripts/test_runner.py --output .autoflow/execution-report.json
 ```
 
-**Acceptance report**
+**验收报告**
 
-Read `.autoflow/review-report.json` and `.autoflow/execution-report.json`.
+读取 `.autoflow/review-report.json` 和 `.autoflow/execution-report.json`。
 
 ```
 AskUserQuestion(
-  "=== Wave 4: Acceptance Report ===\n\n"
-  "Generation:\n"
-  "  Test files:     <N>\n"
-  "  Test functions: <N>\n"
-  "  Review issues:  <critical> critical, <high> high, <low> low\n\n"
-  "Assertion coverage:\n"
-  "  L1 (status):         <N>%\n"
-  "  L2 (schema):         <N>%\n"
-  "  L3 (business):       <N>%\n"
-  "  L4 (db):             <N>%\n"
-  "  L5 (side-effects):   <N>%\n\n"
-  "Execution results:\n"
-  "  Passed: <N>  Failed: <N>  Skipped: <N>\n\n"
-  "Generated files:\n"
-  "  <list of tests/*.py>\n\n"
-  "Acceptance commands:\n"
-  "  make test-all   — run full suite\n"
-  "  make report     — open HTML report\n\n"
-  "Accept and archive? (yes / review-failures / cancel)"
+  "=== 第四波次：验收报告 ===\n\n"
+  "生成结果：\n"
+  "  测试文件：    <N> 个\n"
+  "  测试函数：    <N> 个\n"
+  "  评审问题：    <critical> 个严重，<high> 个高危，<low> 个低危\n\n"
+  "断言覆盖率：\n"
+  "  L1（状态码）：         <N>%\n"
+  "  L2（Schema）：         <N>%\n"
+  "  L3（业务逻辑）：       <N>%\n"
+  "  L4（数据库）：         <N>%\n"
+  "  L5（副作用）：         <N>%\n\n"
+  "执行结果：\n"
+  "  通过：<N>  失败：<N>  跳过：<N>\n\n"
+  "生成文件：\n"
+  "  <tests/*.py 文件列表>\n\n"
+  "验收命令：\n"
+  "  make test-all   — 运行完整测试套件\n"
+  "  make report     — 打开 HTML 报告\n\n"
+  "确认并归档？（yes / review-failures / cancel）"
 )
 ```
 
-**Notify & archive**
+**通知与归档**
 
-If a webhook is configured in `.env`:
+若 `.env` 中配置了 Webhook：
 
 ```bash
 python3 scripts/notifier.py \
@@ -324,20 +324,20 @@ python3 scripts/notifier.py \
   --review .autoflow/review-report.json
 ```
 
-Archive the session:
+归档本次会话：
 
 ```bash
 python3 scripts/state_manager.py archive
 ```
 
-Print final summary:
+打印最终摘要：
 
 ```
-AutoFlow complete
+AutoFlow 完成
 ─────────────────────────────────────────────
-Tests generated:  <N> functions in <M> files
-Passed:           <N>  Failed: <N>  Skipped: <N>
-Session archived: .autoflow/archive/<timestamp>/
+已生成测试：  <N> 个函数，分布在 <M> 个文件中
+通过：        <N>  失败：<N>  跳过：<N>
+会话已归档：  .autoflow/archive/<timestamp>/
 ─────────────────────────────────────────────
-Run: make test-all
+运行：make test-all
 ```
