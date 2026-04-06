@@ -1,0 +1,127 @@
+"""Webhook notifier for DingTalk, Feishu, and Slack."""
+from __future__ import annotations
+
+import logging
+from dataclasses import dataclass
+
+import httpx
+
+logger = logging.getLogger(__name__)
+
+MAX_BODY_LENGTH = 4500
+_TRUNCATION_SUFFIX = "... (truncated)"
+
+
+# ---------------------------------------------------------------------------
+# Payload
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class NotificationPayload:
+    title: str
+    body: str
+
+
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
+
+
+def _truncate(text: str, max_len: int = MAX_BODY_LENGTH) -> str:
+    if len(text) <= max_len:
+        return text
+    cut = max_len - len(_TRUNCATION_SUFFIX)
+    return text[:cut] + _TRUNCATION_SUFFIX
+
+
+# ---------------------------------------------------------------------------
+# Formatters
+# ---------------------------------------------------------------------------
+
+
+def format_dingtalk(payload: NotificationPayload) -> dict:
+    body = _truncate(payload.body)
+    text = f"## {payload.title}\n\n{body}"
+    return {
+        "msgtype": "markdown",
+        "markdown": {
+            "title": payload.title,
+            "text": text,
+        },
+    }
+
+
+def format_feishu(payload: NotificationPayload) -> dict:
+    body = _truncate(payload.body)
+    return {
+        "msg_type": "interactive",
+        "card": {
+            "header": {
+                "title": {
+                    "tag": "plain_text",
+                    "content": payload.title,
+                }
+            },
+            "elements": [
+                {
+                    "tag": "markdown",
+                    "content": body,
+                }
+            ],
+        },
+    }
+
+
+def format_slack(payload: NotificationPayload) -> dict:
+    body = _truncate(payload.body)
+    return {
+        "blocks": [
+            {
+                "type": "header",
+                "text": {
+                    "type": "plain_text",
+                    "text": payload.title,
+                },
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": body,
+                },
+            },
+        ]
+    }
+
+
+# ---------------------------------------------------------------------------
+# Formatters registry
+# ---------------------------------------------------------------------------
+
+FORMATTERS: dict[str, object] = {
+    "dingtalk": format_dingtalk,
+    "feishu": format_feishu,
+    "slack": format_slack,
+    "custom": format_dingtalk,
+}
+
+
+# ---------------------------------------------------------------------------
+# send_notification
+# ---------------------------------------------------------------------------
+
+
+def send_notification(channel: str, webhook_url: str, payload: NotificationPayload) -> bool:
+    formatter = FORMATTERS.get(channel)
+    if formatter is None:
+        raise ValueError(f"Unknown channel: {channel!r}")
+
+    message = formatter(payload)  # type: ignore[operator]
+
+    try:
+        response = httpx.post(webhook_url, json=message, timeout=10)
+        return response.status_code == 200
+    except Exception:
+        logger.exception("Failed to send notification to %s via %s", channel, webhook_url)
+        return False
