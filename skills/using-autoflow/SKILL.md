@@ -1,22 +1,24 @@
 ---
 name: using-autoflow
-description: "初始化 AutoFlow 环境 — 项目脚手架、仓库配置、技术栈设置。适用场景：首次运行、/using-autoflow、'初始化 autoflow'、'设置 autoflow'。"
+description: "初始化 AutoFlow 环境 — 智能项目分类、深度扫描/行业调研、方案推荐、脚手架生成。适用场景：首次运行、/using-autoflow、'初始化 autoflow'、'设置 autoflow'。"
 argument-hint: "[--force]"
 user-invocable: true
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion
+allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Agent, AskUserQuestion, WebSearch, WebFetch
 ---
 
 # AutoFlow 初始化技能
 
 为新项目或已有项目引导安装 AutoFlow 自动化测试框架。
-流程包括：环境校验、技术栈选择、仓库接入、连接配置，
+流程包括：环境校验、智能分类、深度扫描/行业调研、仓库接入、连接配置，
 最终生成项目脚手架和 CLAUDE.md。
 
 ---
 
-## 第一步：环境检测与依赖预检
+## 第零步：环境检测 + 智能分类
 
-检查所有必要工具是否可用，并输出各工具的状态。
+### 环境检测
+
+检查所有必要工具是否可用：
 
 ```bash
 python3 --version   # 要求 >= 3.12
@@ -32,21 +34,6 @@ test -f poetry.lock && echo "PKG_MGR: poetry"
 test -f requirements.txt && echo "PKG_MGR: pip"
 ```
 
-检测当前是否为已有项目（任意一项命中即判定为已有项目）：
-
-```bash
-# 检测已有项目标志
-for f in pyproject.toml requirements.txt setup.py setup.cfg conftest.py pytest.ini; do
-  test -f "$f" && echo "FOUND: $f"
-done
-# 检测已有测试目录
-for d in testcases tests test; do
-  test -d "$d" && echo "TEST_DIR: $d"
-done
-```
-
-如果检测到任何一项，判断为已有项目。
-
 检测插件依赖：
 
 ```bash
@@ -55,10 +42,7 @@ python3 -c "import pydantic" 2>/dev/null || echo "MISSING: pydantic"
 python3 -c "import yaml" 2>/dev/null || echo "MISSING: pyyaml"
 ```
 
-若有缺失依赖，根据检测到的包管理器自动安装：
-- uv: `uv pip install jinja2 pydantic pyyaml`
-- pip: `pip install jinja2 pydantic pyyaml`
-- 系统 Python (externally managed): `python3 -m pip install --user jinja2 pydantic pyyaml`
+若有缺失依赖，根据检测到的包管理器自动安装。
 
 输出状态表格：
 
@@ -70,172 +54,382 @@ python3 -c "import yaml" 2>/dev/null || echo "MISSING: pyyaml"
 | jinja2    | 任意     | —        | 正常/已安装 |
 | pydantic  | 任意     | —        | 正常/已安装 |
 | pyyaml    | 任意     | —        | 正常/已安装 |
-| 项目类型  | —        | 已有/新建 | 信息 |
 
 若有必要工具缺失，打印安装说明并终止。
 
----
+### 快速重初始化检测
 
-## 第二步：项目风格检测与确认
-
-### 已有项目
-
-全面扫描项目已有的风格配置和运行环境：
-
-**风格配置检测：**
-- 读取 `pyproject.toml` 中的 `[tool.ruff]`、`[tool.mypy]`、`[tool.pyright]`
-- 若存在，读取 `.editorconfig`
-- 若存在，读取 `ruff.toml`
-- 读取测试目录下测试文件头部，推断编码规范
-
-**运行环境检测：**
-- 读取 `pyproject.toml` 中的 `requires-python`，推断 Python 版本要求
-- 检测包管理器：`uv.lock` -> uv / `poetry.lock` -> poetry / `requirements.txt` -> pip
-- 读取 `pyproject.toml` 中的 `[project.dependencies]`，记录已有依赖
-- 检测测试框架配置：`[tool.pytest.ini_options]`、`pytest.ini`、`setup.cfg`
-- 若存在 `Makefile`，提取已有 target 列表
-- 若存在 `.pre-commit-config.yaml`，记录已有 hooks
-
-**测试目录结构与代码风格深度扫描：**
-- 识别测试入口目录（testcases/ vs tests/ vs test/）
-- 识别子目录模式（scenariotest/ interface/ unittest/ 等）
-- 读取 3-5 个现有测试文件头部，分析代码模式：
-  - API 封装方式（Enum? 常量? 直接写URL?）
-  - Request 工具类（BaseRequests? requests.Session? httpx?）
-  - 断言风格（assert resp['code'] == 1? assert resp.status_code == 200?）
-  - allure 使用方式
-  - 认证方式（Cookie? Token? 自定义头?）
-
-将检测结果汇总输出：
-
-```
-已有项目环境检测报告：
-──────────────────────────────────────────
-Python 版本要求：  >= 3.11
-包管理器：         poetry（检测到 poetry.lock）
-代码检查：         ruff（line-length=88）
-类型检查：         mypy（strict 模式）
-测试框架：         pytest（asyncio_mode=auto）
-已有依赖：         httpx, pydantic, sqlalchemy ...
-Pre-commit：       已配置（3 个 hooks）
-Makefile：         已配置（test, lint, format）
-──────────────────────────────────────────
-
-已有测试项目结构检测：
-──────────────────────────────────────────
-测试入口目录：     testcases/
-子目录结构：       scenariotest/, interface/ (未发现 unittest/)
-API 封装模式：     Enum (api/xxx/xxx_api.py)
-Request 封装：     BaseRequests (utils/common/BaseRequests.py)
-断言风格：         resp['code'] == 1 + resp['success'] is True
-认证方式：         Cookie (BaseCookies)
-Allure 层级：      @allure.epic -> @allure.feature -> @allure.story
-──────────────────────────────────────────
+```bash
+test -f autoflow-config.yaml && echo "CONFIG_EXISTS"
 ```
 
-然后询问：
+若 `autoflow-config.yaml` 已存在：
 
 ```
 AskUserQuestion(
-  "检测到已有项目配置，请选择处理方式：\n"
-  "A) 保持旧项目风格和环境（推荐）\n"
-  "   — 沿用现有 Python 版本、包管理器、linter、依赖，\n"
-  "     仅追加 AutoFlow 必需的依赖（httpx、pydantic、pytest 等），\n"
-  "     不改动已有配置文件格式和规则\n"
-  "B) 覆盖为 AutoFlow 默认配置\n"
-  "   — 使用推荐技术栈，替换现有工具链配置\n"
-  "C) 手动自定义\n"
-  "   — 逐项确认保留或替换每个配置项"
-)
-```
-
-各选项行为：
-
-- **A -- 保持旧项目风格和环境：**
-  - 保留 `requires-python` 不变
-  - 保留现有包管理器（继续使用 poetry/pip/uv）
-  - 保留现有 linter/formatter 配置（ruff.toml、pyproject.toml 中的 tool 配置段）
-  - 保留现有 `.editorconfig`、`.pre-commit-config.yaml`
-  - 保留现有 Makefile target，仅追加缺失的 AutoFlow target
-  - 仅追加 AutoFlow 必需但尚未安装的依赖（不升级已有依赖版本）
-  - 生成 CLAUDE.md 时记录旧项目的实际技术栈，而非 AutoFlow 默认栈
-
-- **B -- 覆盖为 AutoFlow 默认配置：**
-  - 使用推荐技术栈完全替换
-  - 备份已有配置到 `.autoflow/backup/` 目录
-
-- **C -- 手动自定义：**
-  - 逐项展示检测到的配置 vs AutoFlow 默认配置
-  - 用户逐项选择保留或替换
-
-### 新项目
-
-请用户选择技术栈：
-
-```
-AskUserQuestion(
-  "请为本项目选择技术栈：\n"
-  "A) 推荐：Python 3.13 + uv + ruff + pyright + pre-commit + rich + make\n"
-  "B) 保守：Python 3.12 + pip + flake8 + mypy + pytest-html\n"
-  "C) 自定义：请输入您的偏好"
-)
-```
-
-若用户选择 C，逐项询问：
-- Python 版本
-- 包管理器（uv / pip / poetry）
-- 代码检查工具（ruff / flake8 / pylint）
-- 类型检查工具（pyright / mypy）
-- 可选扩展（pre-commit、rich、make）
-
-将确认后的技术栈存储为 `_stack`，供后续步骤使用。
-
----
-
-## 第二点五步：测试类型选择
-
-根据项目类型，引导用户选择要生成的测试类型。
-
-### 新项目
-
-```
-AskUserQuestion(
-  multiSelect=true,
-  "请选择要生成的测试类型：",
+  "检测到已有 AutoFlow 配置。请选择处理方式：",
   options=[
-    "All — 全部类型",
-    "interface — 接口测试（单接口验证）",
-    "scenariotest — 场景测试（CRUD 闭环、业务流程）",
-    "unittest — 单元测试（需要源码仓库）"
+    "使用现有配置直接进入 /autoflow（推荐）",
+    "更新配置（只修改变更项）",
+    "完全重新初始化"
   ]
 )
 ```
 
-注意：unittest 选项仅在用户提供了源码仓库时才显示。若用户选择了 unittest 但尚未配置源码仓库，提示将在第三步配置后生效。
+- 选择「使用现有配置」→ 打印"配置无变更，请运行 /autoflow <har-path>"并终止
+- 选择「更新配置」→ 读取现有配置，后续步骤中只询问用户想修改的部分
+- 选择「完全重新初始化」→ 备份现有配置到 `.autoflow/backup/`，继续完整流程
 
-### 已有项目
+### 智能分类
 
-根据第二步深度扫描结果，动态调整选项：
+扫描项目标志，判定项目类型：
+
+```bash
+# 计算测试文件数
+TEST_COUNT=0
+for d in testcases tests test; do
+  if [ -d "$d" ]; then
+    count=$(find "$d" -name "test_*.py" -o -name "*_test.py" 2>/dev/null | wc -l)
+    TEST_COUNT=$((TEST_COUNT + count))
+  fi
+done
+echo "TEST_FILE_COUNT: $TEST_COUNT"
+
+# 检测 conftest.py
+for f in conftest.py tests/conftest.py testcases/conftest.py test/conftest.py; do
+  test -s "$f" && echo "CONFTEST: $f"
+done
+
+# 检测 pytest 配置
+grep -q "\[tool\.pytest" pyproject.toml 2>/dev/null && echo "PYTEST_CONFIG: pyproject.toml"
+test -f pytest.ini && echo "PYTEST_CONFIG: pytest.ini"
+grep -q "\[tool:pytest\]" setup.cfg 2>/dev/null && echo "PYTEST_CONFIG: setup.cfg"
+
+# 检测 HTTP 客户端
+grep -rl "import requests\|import httpx\|BaseRequests" testcases/ tests/ test/ 2>/dev/null | head -3
+
+# 检测 allure
+grep -rl "import allure" testcases/ tests/ test/ 2>/dev/null | head -3
+
+# 检测 CI 配置
+test -d .github/workflows && echo "CI: github_actions"
+test -f .gitlab-ci.yml && echo "CI: gitlab_ci"
+test -f Jenkinsfile && echo "CI: jenkins"
+```
+
+**判定规则：**
+
+```
+if TEST_FILE_COUNT >= 3 AND (CONFTEST存在 OR PYTEST_CONFIG存在):
+    project_type = "existing_auto"
+else:
+    project_type = "new"
+```
+
+输出分类结果：
+
+```
+项目类型判定：<existing_auto | new>
+  测试文件数：<N>
+  conftest：  <路径 | 未检测到>
+  pytest 配置：<路径 | 未检测到>
+```
+
+**边界情况处理：**
+
+- 若 `project_type = "new"` 但 `TEST_FILE_COUNT > 0`（1-2 个文件）：提示"注意：检测到少量测试文件，如需保留请告知。"
+- 若检测到非 Python 测试代码（.java/.js/.ts 测试文件）：提示"注意：检测到非 Python 测试代码，AutoFlow 目前仅支持 Python。"
+
+根据 `project_type` 进入对应分支。
+
+---
+
+## 分支 A：已有自动化项目（project_type = "existing_auto"）
+
+### 第一步：深度扫描 Agent
+
+启动 project-scanner Agent 深度分析项目：
+
+```
+Agent(
+  name="project-scanner",
+  description="深度扫描已有自动化项目，输出 7 维度分析",
+  model="opus",
+  prompt="
+    读取 agents/project-scanner.md 中的完整指令。
+    project_root: <当前目录>
+    incremental: <true | false>
+    last_commit: <.autoflow/project-profile.json 中的 scan_commit，若存在>
+    执行全部 7 个维度的扫描，写入 .autoflow/project-profile.json。
+  "
+)
+```
+
+等待 Agent 完成，读取 `.autoflow/project-profile.json`。
+
+### 第一步续：交互式逐项确认
+
+读取 project-profile.json，按 7 个维度逐项向用户展示并确认。
+
+**维度 1：项目架构**
 
 ```
 AskUserQuestion(
-  multiSelect=true,
-  "检测到已有测试类型：interface, scenariotest\n"
-  "请选择本次要生成的测试类型：",
+  "【1/7 项目架构】检测结果：\n"
+  "  测试入口目录：  <test_entry_dir>\n"
+  "  子目录结构：    <subdirs 列表>\n"
+  "  conftest 层级：  <conftest_levels>\n"
+  "  工具类目录：    <utility_dirs>\n"
+  "\n检测是否正确？",
+  options=["正确", "需要修正"]
+)
+```
+
+若用户选择"需要修正"，在 Other 中获取修正内容，更新 profile。
+
+**维度 2：代码风格**
+
+```
+AskUserQuestion(
+  "【2/7 代码风格】检测结果：\n"
+  "  API 封装：      <api_pattern> (<api_pattern_path>)\n"
+  "  Request 封装：  <request_class> (<request_class_path>)\n"
+  "  断言风格：      <assertion_style>\n"
+  "  命名规范：      <naming_convention>\n"
+  "\n检测是否正确？",
+  options=["正确", "需要修正"]
+)
+```
+
+**维度 3：鉴权方式**
+
+```
+AskUserQuestion(
+  "【3/7 鉴权方式】检测结果：\n"
+  "  认证方式：      <auth_method>\n"
+  "  认证类：        <auth_class> (<auth_class_path>)\n"
+  "  多环境 Token：  <multi_env_token>\n"
+  "\n检测是否正确？",
+  options=["正确", "需要修正"]
+)
+```
+
+**维度 4：依赖与工具链**
+
+```
+AskUserQuestion(
+  "【4/7 依赖与工具链】检测结果：\n"
+  "  Python 版本：   <python_version>\n"
+  "  包管理器：      <package_manager>\n"
+  "  HTTP 客户端：   <http_client> <http_client_version>\n"
+  "  测试框架：      <test_framework>\n"
+  "  Linter：        <linter>\n"
+  "\n检测是否正确？",
+  options=["正确", "需要修正"]
+)
+```
+
+**维度 5：Allure 使用模式**
+
+```
+AskUserQuestion(
+  "【5/7 Allure 标注】检测结果：\n"
+  "  装饰器层级：    <decorator_hierarchy>\n"
+  "  步骤模式使用率：<step_usage_ratio>\n"
+  "  严重等级标注率：<severity_usage_ratio>\n"
+  "\n检测是否正确？",
+  options=["正确", "需要修正"]
+)
+```
+
+**维度 6：数据管理模式**
+
+```
+AskUserQuestion(
+  "【6/7 数据管理】检测结果：\n"
+  "  测试数据来源：  <data_sources>\n"
+  "  数据驱动：      <parametrize_count> 处 parametrize\n"
+  "  数据库操作：    <db_helper_class> (<db_helper_path>)\n"
+  "  清理策略：      <cleanup_strategy>\n"
+  "\n检测是否正确？",
+  options=["正确", "需要修正"]
+)
+```
+
+**维度 7：行业与业务上下文**
+
+```
+AskUserQuestion(
+  "【7/7 行业上下文】以下是 AI 从代码推断的信息：\n"
+  "  推断行业：      <inferred_industry>\n"
+  "  核心业务领域：  <business_domains>\n"
+  "  合规要求：      <compliance_detected>\n"
+  "\n是否正确？如有补充请在 Other 中说明。",
+  options=["正确", "需要补充"]
+)
+```
+
+将所有确认/修正后的结果作为 `_confirmed_profile` 存储，供后续步骤使用。
+
+分支 A 完成后，跳转到第三步。
+
+---
+
+## 分支 B：新项目 / 非自动化项目（project_type = "new"）
+
+### 第一步：行业画像收集
+
+通过 5 个问题逐一收集用户行业画像：
+
+**Q1 — 行业领域**
+
+```
+AskUserQuestion(
+  "你所在的行业/领域是什么？",
   options=[
-    "interface — 接口测试",
-    "scenariotest — 场景测试",
-    // 仅在检测到 unittest 目录或用户提供了源码时显示
-    "unittest — 单元测试"
+    "互联网/SaaS",
+    "金融/银行/保险",
+    "医疗/健康",
+    "电商/零售"
   ]
 )
 ```
 
-将用户选择的测试类型存储为 `_test_types`，供后续步骤使用。
+**Q2 — 被测系统类型**
+
+```
+AskUserQuestion(
+  "你要测试的系统属于什么类型？",
+  options=[
+    "Web 后端 API (REST/GraphQL)",
+    "微服务架构（多服务间通信）",
+    "移动端 BFF (Backend for Frontend)",
+    "开放平台/第三方 API 集成"
+  ]
+)
+```
+
+**Q3 — 团队规模与自动化经验**
+
+```
+AskUserQuestion(
+  "测试团队规模和自动化经验如何？",
+  options=[
+    "1-2 人，刚开始做自动化",
+    "3-5 人，有一定自动化基础",
+    "5+ 人，成熟的自动化体系"
+  ]
+)
+```
+
+**Q4 — 特殊需求**（多选）
+
+```
+AskUserQuestion(
+  multiSelect=true,
+  "项目有以下哪些特殊需求？",
+  options=[
+    "多环境切换 (dev/staging/prod)",
+    "多版本 API 共存 (v1/v2/v3)",
+    "国际化/多语言",
+    "性能测试/压力测试"
+  ]
+)
+```
+
+**Q5 — 鉴权复杂度**
+
+```
+AskUserQuestion(
+  "系统的鉴权方式有多复杂？",
+  options=[
+    "简单 — 单一 Cookie/Token",
+    "中等 — 多角色权限 + RBAC",
+    "复杂 — OAuth2/SSO/多租户",
+    "不确定 — 需要调研"
+  ]
+)
+```
+
+将 5 个答案组装为 `_industry_profile`。
+
+### 第二步：调研 Agent
+
+派出 industry-researcher Agent：
+
+```
+Agent(
+  name="industry-researcher",
+  description="调研行业自动化测试最佳实践",
+  model="sonnet",
+  prompt="
+    读取 agents/industry-researcher.md 中的完整指令。
+    用户行业画像：
+      industry: <Q1 答案>
+      system_type: <Q2 答案>
+      team_size: <Q3 答案>
+      special_needs: <Q4 答案列表>
+      auth_complexity: <Q5 答案>
+    执行完整调研流程，写入 .autoflow/research-report.json。
+  "
+)
+```
+
+等待 Agent 完成，读取 `.autoflow/research-report.json`。
+
+### 第二步续：方案呈现与选择
+
+读取 research-report.json，向用户展示方案：
+
+```
+AskUserQuestion(
+  "基于你的行业画像，以下是 AI 调研推荐的方案：\n\n"
+  "━━━ 方案 1：<name>（推荐，适合度 <fit_score>/100）━━━\n"
+  "  测试框架：<framework>\n"
+  "  HTTP 客户端：<http_client>\n"
+  "  报告：<report>\n"
+  "  Mock：<mock>\n"
+  "  CI/CD：<ci>\n"
+  "  数据管理：<data_management>\n"
+  "  行业特性：<industry_specific 列表>\n"
+  "  优势：<pros>\n"
+  "  劣势：<cons>\n\n"
+  "━━━ 方案 2：<name>（适合度 <fit_score>/100）━━━\n"
+  "  ...\n\n"
+  "请选择一个方案：",
+  options=["方案 1（推荐）", "方案 2", "方案 3"]
+)
+```
+
+将选择的方案存为 `_selected_solution`。
+
+### 第二步续：方案试运行
+
+基于选定方案，生成一个最小示例测试文件：
+
+1. 根据 `industry_specific` 选取最具代表性的接口类型
+2. 生成包含 1 个 GET + 1 个 POST 测试的文件
+3. 展示给用户确认
+
+```
+AskUserQuestion(
+  "以下是基于所选方案生成的示例测试文件。\n"
+  "请确认代码风格是否符合预期：\n\n"
+  "<示例代码内容>\n\n",
+  options=[
+    "风格正确，继续全量生成（推荐）",
+    "需要调整"
+  ]
+)
+```
+
+若需调整，在 Other 中获取反馈后修改方案参数。
+
+分支 B 完成后，继续第三步。
 
 ---
 
-## 第三步：源码仓库配置
+## 第三步：源码仓库配置（两个分支共用）
 
 询问一个或多个待克隆的源码仓库 URL：
 
@@ -245,15 +439,14 @@ AskUserQuestion(
   "示例：\n"
   "  https://git.example.com/group1/backend.git\n"
   "  https://git.example.com/group2/api.git@develop\n"
-  "输入完毕后留空回车。"
+  "输入完毕后留空回车。如不需要源码分析，请直接跳过。"
 )
 ```
 
 根据 URL 自动推导本地路径：
 
 ```
-https://git.example.com/group1/repo1.git  ->  .repos/group1/repo1/
-https://git.example.com/group2/repo2.git@develop  ->  .repos/group2/repo2/（分支：develop）
+https://git.example.com/group1/repo1.git  →  .repos/group1/repo1/
 ```
 
 克隆并切换每个仓库：
@@ -263,16 +456,25 @@ git clone <url> <local_path>
 git -C <local_path> checkout <branch>   # 若指定了分支
 ```
 
-然后询问 URL 前缀与仓库的映射关系，供 HAR 分析器定位请求所属仓库：
+询问 URL 前缀与仓库的映射关系：
 
 ```
 AskUserQuestion(
   "请配置 URL 前缀与仓库的映射（每行一条）：\n"
-  "格式：<url-prefix> -> <repo-name>\n"
+  "格式：<url-prefix> → <repo-name>\n"
   "示例：\n"
-  "  /api/v1 -> backend\n"
-  "  /admin  -> admin-portal\n"
+  "  /api/v1 → backend\n"
+  "  /admin  → admin-portal\n"
   "输入完毕后留空回车。"
+)
+```
+
+若分支 B 的方案包含 Mock 服务：
+
+```
+AskUserQuestion(
+  "所选方案包含 Mock 服务（<mock 名称>）。是否需要配置 Mock 服务仓库？",
+  options=["是，输入 Mock 仓库 URL", "否，暂不配置"]
 )
 ```
 
@@ -292,7 +494,7 @@ repos:
 
 ---
 
-## 第四步：连接配置
+## 第四步：连接配置（两个分支共用，深度按鉴权复杂度分级）
 
 询问被测系统的 Base URL：
 
@@ -302,209 +504,226 @@ AskUserQuestion(
 )
 ```
 
-询问认证方式。根据项目类型动态调整选项：
+询问认证方式。根据分支和鉴权复杂度动态调整选项：
 
-**已有项目**（检测到认证逻辑时）：
-
-```
-AskUserQuestion(
-  "请选择认证方式：\n"
-  "A) 复用旧项目认证逻辑（推荐，已检测到现有认证方式）\n"
-  "B) Cookie（粘贴原始 Cookie 请求头值）\n"
-  "C) Token（Bearer token）\n"
-  "D) 用户名 + 密码\n"
-  "E) 无需认证"
-)
-```
-
-**新项目**：
+**分支 A（检测到认证逻辑时）：**
 
 ```
 AskUserQuestion(
-  "请选择认证方式：\n"
-  "A) Cookie（粘贴原始 Cookie 请求头值）\n"
-  "B) Token（Bearer token）\n"
-  "C) 用户名 + 密码\n"
-  "D) 无需认证"
+  "请选择认证方式：",
+  options=[
+    "复用旧项目认证逻辑（推荐，检测到：<auth_class>）",
+    "Cookie（粘贴原始 Cookie 请求头值）",
+    "Token（Bearer token）",
+    "用户名 + 密码",
+    "无需认证"
+  ]
 )
 ```
 
-根据所选方式逐项收集凭证（每个字段单独一次 AskUserQuestion）。
-若选择「复用旧项目认证逻辑」，则跳过凭证收集，记录 auth_method 为 `reuse`。
+**分支 B（简单鉴权）：**
+
+```
+AskUserQuestion(
+  "请选择认证方式：",
+  options=[
+    "Cookie（粘贴原始 Cookie 请求头值）",
+    "Token（Bearer token）",
+    "用户名 + 密码",
+    "无需认证"
+  ]
+)
+```
+
+**分支 B（中等鉴权 — RBAC）：** 上述选项 + 额外追问：
+
+```
+AskUserQuestion(
+  "请输入需要测试的角色列表（每行一个）：\n"
+  "示例：admin, editor, viewer"
+)
+```
+
+**分支 B（复杂鉴权 — OAuth2/SSO）：** 上述选项 + 额外追问：
+
+```
+AskUserQuestion("请输入 OAuth2 Client ID：")
+AskUserQuestion("请输入 OAuth2 Client Secret：")
+AskUserQuestion("请输入 SSO/Token 端点 URL：")
+```
+
+根据所选方式逐项收集凭证。若选择「复用旧项目认证逻辑」，记录 `auth_method: reuse`。
 
 询问可选集成项：
 
 ```
-AskUserQuestion(
-  "是否配置数据库连接？（y/n）\n"
-  "如选是，将依次询问主机、端口、用户名、密码及数据库名。"
-)
+AskUserQuestion("是否配置数据库连接？（y/n）")
 ```
 
 若选是，逐项收集数据库字段。
 
 ```
-AskUserQuestion(
-  "是否配置通知 Webhook？（y/n）\n"
-  "支持：钉钉、飞书、Slack"
-)
+AskUserQuestion("是否配置通知 Webhook？（y/n）\n支持：钉钉、飞书、Slack")
 ```
 
 若选是，询问 Webhook URL 和平台类型。
 
 ### 配置文件写入
 
-**已有项目** -- .env 冲突处理：
+**分支 A（已有 .env）：** 不修改 .env，AutoFlow 配置写入 `.autoflow/config.yaml`。
 
-检查 `.env` 是否已存在且有内容：
-- 若 `.env` 已存在且非空：不修改 `.env`，将 AutoFlow 配置写入 `.autoflow/config.yaml`
-- 告知用户：「已有 .env 不受影响，AutoFlow 配置已写入 .autoflow/config.yaml」
-
-`.autoflow/config.yaml` 格式：
-```yaml
-# .autoflow/config.yaml — AutoFlow 连接配置（不影响已有 .env）
-base_url: <value>
-auth:
-  method: cookie  # cookie | token | password | none | reuse
-  cookie: <value>        # 或 token / user + pass
-database:                # 若已配置
-  host: <value>
-  port: <value>
-  user: <value>
-  password: <value>
-  name: <value>
-notify:                  # 若已配置
-  webhook: <value>
-  platform: <value>      # dingtalk | feishu | slack
-```
-
-**新项目** -- 正常写入 `.env` 和 `.env.example`：
-
-`.env` -- 包含真实值（已加入 .gitignore）：
-```
-BASE_URL=<value>
-AUTH_COOKIE=<value>        # 或 AUTH_TOKEN / AUTH_USER + AUTH_PASS
-DB_HOST=<value>            # 若已配置数据库
-NOTIFY_WEBHOOK=<value>     # 若已配置通知
-NOTIFY_PLATFORM=<value>    # dingtalk | feishu | slack
-```
-
-`.env.example` -- 仅含占位符（提交至版本控制）：
-```
-BASE_URL=http://your-server
-AUTH_COOKIE=your_cookie_here
-```
+**分支 B（新项目）：** 正常写入 `.env` 和 `.env.example`。
 
 ---
 
-## 第五步：脚手架生成 + CLAUDE.md
+## 第五步：脚手架生成 + CLAUDE.md + 配置验证
 
-### 新项目
+### 生成 autoflow-config.yaml
 
-运行脚手架脚本，生成项目目录结构：
+使用 Jinja2 模板 `templates/autoflow-config.yaml.j2` 渲染 `autoflow-config.yaml`：
+- 分支 A：包含 `project.code_style` 段（从确认后的 profile 提取）
+- 分支 B：包含 `industry` 段和 `solution` 段
+
+### 脚手架生成
+
+**分支 A：**
 
 ```bash
 python3 ${CLAUDE_SKILL_DIR}/../../scripts/scaffold.py \
-  --stack "${_stack}" \
-  --base-url "${BASE_URL}"
+  --mode existing \
+  --project-root "."
 ```
 
-脚本将创建以下文件：
+仅追加 `.autoflow/`、`.repos/`、`.trash/` 目录和 `.gitignore` 条目。
+
+**分支 B：**
+
+```bash
+python3 ${CLAUDE_SKILL_DIR}/../../scripts/scaffold.py \
+  --mode new \
+  --stack "${_selected_solution.stack}" \
+  --base-url "${BASE_URL}" \
+  --project-root "."
 ```
-tests/
-  conftest.py
-  test_smoke.py
-Makefile          （若技术栈包含 make）
-pyproject.toml    （已更新）
-.pre-commit-config.yaml  （若技术栈包含 pre-commit）
-.gitignore        （确保 .env、.repos/、.autoflow/、.trash/ 已被忽略）
+
+生成完整目录结构：tests/、core/、conftest.py、pyproject.toml、Makefile 等。
+
+### 生成 CLAUDE.md
+
+在项目根目录生成 `CLAUDE.md`：
+
+**分支 A 的 CLAUDE.md 包含：**
+```markdown
+# CLAUDE.md — AutoFlow 项目（已有项目适配）
+
+## 项目理解
+<7 维度扫描确认后的摘要>
+
+## 代码风格约束
+- API 封装：<api_pattern>
+- Request 封装：<request_class>
+- 断言风格：<assertion_style>
+- 认证方式：<auth_method>
+以上风格优先于 AutoFlow 默认规范。
+
+## 行业上下文
+<维度 7 确认结果>
 ```
 
-### 已有项目
-
-不运行 scaffold.py 创建目录结构，仅执行以下操作：
-
-- **追加 .gitignore 条目**：确保以下条目存在（不重复追加）：
-  ```
-  .repos/
-  .autoflow/
-  .trash/
-  ```
-- **创建 .autoflow/ 目录**（若不存在）
-- **生成 CLAUDE.md**（见下方）
-
-### CLAUDE.md 生成
-
-在项目根目录自动生成 `CLAUDE.md`，包含以下章节：
-
+**分支 B 的 CLAUDE.md 包含：**
 ```markdown
 # CLAUDE.md — AutoFlow 项目
 
 ## 技术栈
-<第二步确认的技术栈>
+<选定方案的完整技术栈>
+
+## 行业上下文
+<行业画像 + 合规要求>
 
 ## 项目结构
 <目录树>
-
-## 测试类型
-<第二点五步选择的测试类型列表>
-
-## 源码仓库引用
-<repo-profiles.yaml 中的仓库列表及本地路径>
-
-## 规范索引
-- 测试目录：<检测到的测试入口目录>
-- Fixture：<conftest.py 路径>
-- 断言规范：见 prompts/assertion-layers.md
-- 代码风格：见 prompts/code-style-python.md
 
 ## 环境信息
 - Base URL：${BASE_URL}
 - 认证方式：<method>
 - 数据库：<已配置 / 未配置>
-- 通知：<已配置 / 未配置>
 ```
 
-### autoflow-config.yaml 输出
+### 配置验证
 
-在初始化结束时，将所有配置写入项目根目录的 `autoflow-config.yaml`：
+在脚手架生成后，自动执行 smoke test：
 
-```yaml
-# autoflow-config.yaml — 由 /using-autoflow 自动生成
-project:
-  type: existing  # existing | new
-  test_dir: testcases  # 测试入口目录
-  test_types:  # 用户选择的测试类型
-    - interface
-    - scenariotest
-  code_style:
-    api_pattern: enum  # enum | constant | inline
-    request_class: BaseRequests  # BaseRequests | httpx | requests
-    assertion_style: "resp['code'] == 1"
-    auth_method: cookie  # cookie | token | password | none | reuse
-    allure_enabled: true
-  package_manager: pip  # uv | pip | poetry
+```bash
+# 1. Base URL 可达性
+python3 -c "
+import httpx
+try:
+    r = httpx.get('${BASE_URL}', timeout=10)
+    print(f'BASE_URL: OK (HTTP {r.status_code})')
+except Exception as e:
+    print(f'BASE_URL: FAIL ({e})')
+"
 ```
 
-该文件作为后续 `/autoflow` 技能的输入，用于生成符合项目风格的测试代码。
+```bash
+# 2. 认证有效性（若非 reuse 模式）
+python3 -c "
+import httpx
+headers = {<根据认证方式构建>}
+try:
+    r = httpx.get('${BASE_URL}', headers=headers, timeout=10)
+    print(f'AUTH: {\"OK\" if r.status_code < 400 else \"FAIL\"} (HTTP {r.status_code})')
+except Exception as e:
+    print(f'AUTH: FAIL ({e})')
+"
+```
 
-### 初始化摘要
+```bash
+# 3. 数据库连接（若配置了数据库）
+python3 -c "
+import pymysql
+try:
+    conn = pymysql.connect(host='${DB_HOST}', port=${DB_PORT}, user='${DB_USER}', password='${DB_PASS}', database='${DB_NAME}')
+    print('DB: OK')
+    conn.close()
+except Exception as e:
+    print(f'DB: FAIL ({e})')
+"
+```
 
-最后打印初始化摘要：
+展示验证结果：
+
+```
+配置验证结果：
+  Base URL 可达性：  <通过/失败 + 详情>
+  认证有效性：        <通过/失败 + 详情>
+  数据库连接：        <通过/失败/未配置>
+```
+
+若有失败项：
+
+```
+AskUserQuestion(
+  "<失败项> 验证失败：<错误详情>\n是否立即修正？",
+  options=["是，重新输入", "跳过，稍后修正"]
+)
+```
+
+若选择修正，回到第四步对应的配置项重新收集。
+
+### 打印初始化摘要
 
 ```
 AutoFlow 初始化完成
 ──────────────────────────────────────────
-项目类型：    已有项目 / 新项目
-技术栈：      Python 3.13 + uv + ruff + pyright
-测试类型：    interface, scenariotest
-测试目录：    testcases/
-已克隆仓库：  2 个
-URL 映射：    3 条
-认证方式：    Cookie
-数据库：      已配置
-Webhook：     飞书
-配置文件：    autoflow-config.yaml
+项目类型：      <existing_auto / new>
+技术栈：        <方案名称 / 旧项目原有栈>
+行业：          <domain>
+已克隆仓库：    <N> 个
+URL 映射：      <N> 条
+认证方式：      <method>
+数据库：        <已配置 / 未配置>
+配置验证：      <全部通过 / N 项失败>
 ──────────────────────────────────────────
 下一步：执行 /autoflow <path-to.har>
 ```
