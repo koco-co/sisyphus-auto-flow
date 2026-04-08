@@ -1,104 +1,104 @@
 <mxfile host="cli-anything-drawio" modified="2026-04-08" agent="sisyphus-autoflow" version="24.0.0">
   <diagram id="workflow" name="AutoFlow Pipeline">
-    <mxGraphModel dx="1600" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="400" math="0" shadow="0">
+    <mxGraphModel dx="700" dy="1400" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="700" pageHeight="1400" math="0" shadow="0">
       <root>
         <mxCell id="0"/>
         <mxCell id="1" parent="0"/>
-        <!-- Entry -->
-        <mxCell id="entry" value="&lt;b&gt;/autoflow&lt;/b&gt;&lt;br&gt;HAR File" style="rounded=1;whiteSpace=wrap;fillColor=#dcedc8;strokeColor=#689f38;fontSize=12;fontFamily=system-ui;html=1;" vertex="1" parent="1">
-          <mxGeometry x="20" y="140" width="140" height="55" as="geometry"/>
+
+        <!-- ===== 入口 ===== -->
+        <mxCell id="entry" value="&lt;b style='font-size:15px'&gt;/autoflow&lt;/b&gt;  &lt;font color='#558b2f'&gt;HAR 抓包文件&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcedc8;strokeColor=#689f38;fontSize=12;strokeWidth=2;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="150" y="20" width="400" height="50" as="geometry"/>
         </mxCell>
-        <mxCell id="precheck" value="预检阶段&lt;br&gt;&lt;font style='font-size:10px;color:#666'&gt;HAR校验 · 认证扫描 · 配置加载&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#9e9e9e;fontSize=11;fontFamily=system-ui;html=1;" vertex="1" parent="1">
-          <mxGeometry x="200" y="140" width="180" height="55" as="geometry"/>
+
+        <!-- ===== 预检 ===== -->
+        <mxCell id="precheck" value="&lt;b&gt;预检阶段&lt;/b&gt;　HAR 校验 · 认证头扫描 · 配置加载 · 恢复检查" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#bdbdbd;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="150" y="100" width="400" height="40" as="geometry"/>
         </mxCell>
-        <!-- Wave 1 -->
-        <mxCell id="w1_label" value="Wave 1" style="text;fontSize=10;fontStyle=1;fontColor=#388e3c;fontFamily=system-ui;html=1;" vertex="1" parent="1">
-          <mxGeometry x="420" y="50" width="60" height="20" as="geometry"/>
+
+        <!-- ===== Wave 1 ===== -->
+        <mxCell id="w1bg" value="" style="rounded=1;fillColor=#e8f5e9;strokeColor=#a5d6a7;strokeWidth=2;opacity=40;" vertex="1" parent="1">
+          <mxGeometry x="60" y="180" width="580" height="170" as="geometry"/>
         </mxCell>
-        <mxCell id="w1_bg" value="" style="rounded=1;fillColor=#e8f5e9;strokeColor=#c8e6c9;strokeWidth=1;opacity=30;" vertex="1" parent="1">
-          <mxGeometry x="410" y="65" width="170" height="200" as="geometry"/>
+        <mxCell id="w1label" value="&lt;b style='font-size:14px;color:#2e7d32'&gt;Wave 1&lt;/b&gt;　&lt;font color='#4caf50'&gt;解析与准备&lt;/font&gt;　&lt;font color='#81c784' style='font-size:10px'&gt;⚡ 并行&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="80" y="185" width="300" height="30" as="geometry"/>
         </mxCell>
-        <mxCell id="w1_title" value="&lt;b&gt;解析与准备&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;fillColor=#c8e6c9;strokeColor=#388e3c;fontSize=11;fontFamily=system-ui;html=1;" vertex="1" parent="1">
-          <mxGeometry x="420" y="75" width="150" height="35" as="geometry"/>
+        <mxCell id="w1a" value="&lt;b&gt;har-parser&lt;/b&gt;&lt;br&gt;&lt;font color='#666' style='font-size:10px'&gt;haiku · HAR 过滤去重&lt;br&gt;服务分组 · 仓库匹配&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#c8e6c9;strokeColor=#4caf50;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="80" y="225" width="250" height="55" as="geometry"/>
         </mxCell>
-        <mxCell id="w1_har" value="har-parser&lt;br&gt;&lt;font style='font-size:9px;color:#666'&gt;haiku&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;fillColor=#e8f5e9;strokeColor=#4caf50;fontSize=10;fontFamily=system-ui;html=1;" vertex="1" parent="1">
-          <mxGeometry x="420" y="125" width="150" height="35" as="geometry"/>
+        <mxCell id="w1b" value="&lt;b&gt;repo-syncer&lt;/b&gt;&lt;br&gt;&lt;font color='#666' style='font-size:10px'&gt;haiku · Git 仓库同步&lt;br&gt;Controller 路由索引&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#c8e6c9;strokeColor=#4caf50;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="370" y="225" width="250" height="55" as="geometry"/>
         </mxCell>
-        <mxCell id="w1_repo" value="repo-syncer&lt;br&gt;&lt;font style='font-size:9px;color:#666'&gt;haiku&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;fillColor=#e8f5e9;strokeColor=#4caf50;fontSize=10;fontFamily=system-ui;html=1;" vertex="1" parent="1">
-          <mxGeometry x="420" y="175" width="150" height="35" as="geometry"/>
+        <mxCell id="w1out" value="&lt;font color='#2e7d32'&gt;✓ parsed.json　✓ repo-status.json&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f1f8e9;strokeColor=#aed581;fontSize=10;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="300" width="540" height="30" as="geometry"/>
         </mxCell>
-        <mxCell id="w1_verify" value="✓ 验证输出" style="rounded=1;whiteSpace=wrap;fillColor=#f1f8e9;strokeColor=#aed581;fontSize=9;fontFamily=system-ui;html=1;" vertex="1" parent="1">
-          <mxGeometry x="420" y="222" width="150" height="30" as="geometry"/>
+
+        <!-- ===== Wave 2 ===== -->
+        <mxCell id="w2bg" value="" style="rounded=1;fillColor=#fff3e0;strokeColor=#ffcc80;strokeWidth=2;opacity=40;" vertex="1" parent="1">
+          <mxGeometry x="60" y="390" width="580" height="200" as="geometry"/>
         </mxCell>
-        <!-- Wave 2 -->
-        <mxCell id="w2_label" value="Wave 2" style="text;fontSize=10;fontStyle=1;fontColor=#f57c00;fontFamily=system-ui;html=1;" vertex="1" parent="1">
-          <mxGeometry x="620" y="50" width="60" height="20" as="geometry"/>
+        <mxCell id="w2label" value="&lt;b style='font-size:14px;color:#e65100'&gt;Wave 2&lt;/b&gt;　&lt;font color='#ff9800'&gt;场景分析&lt;/font&gt;　&lt;font color='#ffb74d' style='font-size:10px'&gt;交互式&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="80" y="395" width="300" height="30" as="geometry"/>
         </mxCell>
-        <mxCell id="w2_bg" value="" style="rounded=1;fillColor=#fff3e0;strokeColor=#ffe0b2;strokeWidth=1;opacity=30;" vertex="1" parent="1">
-          <mxGeometry x="610" y="65" width="170" height="200" as="geometry"/>
+        <mxCell id="w2a" value="&lt;b&gt;scenario-analyzer&lt;/b&gt;&lt;br&gt;&lt;font color='#666' style='font-size:10px'&gt;opus · 源码追踪 Controller → Service → DAO&lt;br&gt;推断 8 种场景类别 · 规划 L1-L5 断言层级&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe0b2;strokeColor=#f57c00;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="80" y="435" width="350" height="60" as="geometry"/>
         </mxCell>
-        <mxCell id="w2_title" value="&lt;b&gt;场景分析&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;fillColor=#ffe0b2;strokeColor=#f57c00;fontSize=11;fontFamily=system-ui;html=1;" vertex="1" parent="1">
-          <mxGeometry x="620" y="75" width="150" height="35" as="geometry"/>
+        <mxCell id="w2confirm" value="&lt;b&gt;👤&lt;/b&gt;&lt;br&gt;&lt;b&gt;用户确认&lt;/b&gt;" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff9c4;strokeColor=#f9a825;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="470" y="430" width="110" height="70" as="geometry"/>
         </mxCell>
-        <mxCell id="w2_analyzer" value="scenario-analyzer&lt;br&gt;&lt;font style='font-size:9px;color:#666'&gt;opus · 源码追踪&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;fillColor=#fff3e0;strokeColor=#ff9800;fontSize=10;fontFamily=system-ui;html=1;" vertex="1" parent="1">
-          <mxGeometry x="620" y="125" width="150" height="35" as="geometry"/>
+        <mxCell id="w2out" value="&lt;font color='#e65100'&gt;✓ scenarios.json　✓ generation-plan.json&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff8e1;strokeColor=#ffcc80;fontSize=10;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="520" width="540" height="30" as="geometry"/>
         </mxCell>
-        <mxCell id="w2_confirm" value="👤 用户确认场景" style="rhombus;whiteSpace=wrap;fillColor=#fff9c4;strokeColor=#f9a825;fontSize=10;fontFamily=system-ui;html=1;" vertex="1" parent="1">
-          <mxGeometry x="625" y="175" width="140" height="50" as="geometry"/>
+
+        <!-- ===== Wave 3 ===== -->
+        <mxCell id="w3bg" value="" style="rounded=1;fillColor=#e3f2fd;strokeColor=#90caf9;strokeWidth=2;opacity=40;" vertex="1" parent="1">
+          <mxGeometry x="60" y="630" width="580" height="170" as="geometry"/>
         </mxCell>
-        <!-- Wave 3 -->
-        <mxCell id="w3_label" value="Wave 3" style="text;fontSize=10;fontStyle=1;fontColor=#1976d2;fontFamily=system-ui;html=1;" vertex="1" parent="1">
-          <mxGeometry x="820" y="50" width="60" height="20" as="geometry"/>
+        <mxCell id="w3label" value="&lt;b style='font-size:14px;color:#1565c0'&gt;Wave 3&lt;/b&gt;　&lt;font color='#1976d2'&gt;代码生成&lt;/font&gt;　&lt;font color='#64b5f6' style='font-size:10px'&gt;⚡ 并行扇出&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="80" y="635" width="300" height="30" as="geometry"/>
         </mxCell>
-        <mxCell id="w3_bg" value="" style="rounded=1;fillColor=#e3f2fd;strokeColor=#bbdefb;strokeWidth=1;opacity=30;" vertex="1" parent="1">
-          <mxGeometry x="810" y="65" width="170" height="200" as="geometry"/>
+        <mxCell id="w3a" value="&lt;b&gt;case-writer #1&lt;/b&gt;&lt;br&gt;&lt;font color='#666' style='font-size:9px'&gt;sonnet · 模块 A&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bbdefb;strokeColor=#1976d2;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="675" width="155" height="45" as="geometry"/>
         </mxCell>
-        <mxCell id="w3_title" value="&lt;b&gt;代码生成&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;fillColor=#bbdefb;strokeColor=#1976d2;fontSize=11;fontFamily=system-ui;html=1;" vertex="1" parent="1">
-          <mxGeometry x="820" y="75" width="150" height="35" as="geometry"/>
+        <mxCell id="w3b" value="&lt;b&gt;case-writer #2&lt;/b&gt;&lt;br&gt;&lt;font color='#666' style='font-size:9px'&gt;sonnet · 模块 B&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bbdefb;strokeColor=#1976d2;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="260" y="675" width="155" height="45" as="geometry"/>
         </mxCell>
-        <mxCell id="w3_writers" value="case-writer ×N&lt;br&gt;&lt;font style='font-size:9px;color:#666'&gt;sonnet · 并行扇出&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;fillColor=#e3f2fd;strokeColor=#1565c0;fontSize=10;fontFamily=system-ui;html=1;" vertex="1" parent="1">
-          <mxGeometry x="820" y="125" width="150" height="35" as="geometry"/>
+        <mxCell id="w3c" value="&lt;b&gt;case-writer #N&lt;/b&gt;&lt;br&gt;&lt;font color='#666' style='font-size:9px'&gt;sonnet · 模块 ...&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#bbdefb;strokeColor=#1976d2;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="440" y="675" width="155" height="45" as="geometry"/>
         </mxCell>
-        <mxCell id="w3_verify" value="✓ py_compile 验证" style="rounded=1;whiteSpace=wrap;fillColor=#e8eaf6;strokeColor=#7986cb;fontSize=9;fontFamily=system-ui;html=1;" vertex="1" parent="1">
-          <mxGeometry x="820" y="175" width="150" height="30" as="geometry"/>
+        <mxCell id="w3out" value="&lt;font color='#1565c0'&gt;✓ py_compile 验证　✓ import 检查　✓ tests/*.py&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8eaf6;strokeColor=#7986cb;fontSize=10;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="740" width="540" height="30" as="geometry"/>
         </mxCell>
-        <!-- Wave 4 -->
-        <mxCell id="w4_label" value="Wave 4" style="text;fontSize=10;fontStyle=1;fontColor=#c62828;fontFamily=system-ui;html=1;" vertex="1" parent="1">
-          <mxGeometry x="1020" y="50" width="60" height="20" as="geometry"/>
+
+        <!-- ===== Wave 4 ===== -->
+        <mxCell id="w4bg" value="" style="rounded=1;fillColor=#fce4ec;strokeColor=#f48fb1;strokeWidth=2;opacity=40;" vertex="1" parent="1">
+          <mxGeometry x="60" y="840" width="580" height="200" as="geometry"/>
         </mxCell>
-        <mxCell id="w4_bg" value="" style="rounded=1;fillColor=#fce4ec;strokeColor=#f8bbd0;strokeWidth=1;opacity=30;" vertex="1" parent="1">
-          <mxGeometry x="1010" y="65" width="170" height="200" as="geometry"/>
+        <mxCell id="w4label" value="&lt;b style='font-size:14px;color:#b71c1c'&gt;Wave 4&lt;/b&gt;　&lt;font color='#e53935'&gt;评审与交付&lt;/font&gt;　&lt;font color='#ef9a9a' style='font-size:10px'&gt;交互式&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="80" y="845" width="300" height="30" as="geometry"/>
         </mxCell>
-        <mxCell id="w4_title" value="&lt;b&gt;评审与交付&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;fillColor=#ffcdd2;strokeColor=#c62828;fontSize=11;fontFamily=system-ui;html=1;" vertex="1" parent="1">
-          <mxGeometry x="1020" y="75" width="150" height="35" as="geometry"/>
+        <mxCell id="w4a" value="&lt;b&gt;case-reviewer&lt;/b&gt;&lt;br&gt;&lt;font color='#666' style='font-size:10px'&gt;opus · 5 维评审（断言 · 场景 · 源码 · 质量 · 可运行性）&lt;br&gt;自动修复 ≤2 轮 · 偏差率门控&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcdd2;strokeColor=#e53935;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="80" y="885" width="350" height="60" as="geometry"/>
         </mxCell>
-        <mxCell id="w4_reviewer" value="case-reviewer&lt;br&gt;&lt;font style='font-size:9px;color:#666'&gt;opus · 5维评审&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;fillColor=#fce4ec;strokeColor=#e53935;fontSize=10;fontFamily=system-ui;html=1;" vertex="1" parent="1">
-          <mxGeometry x="1020" y="125" width="150" height="35" as="geometry"/>
+        <mxCell id="w4b" value="&lt;b&gt;pytest&lt;/b&gt;&lt;br&gt;&lt;font color='#666' style='font-size:10px'&gt;执行 + allure&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcdd2;strokeColor=#e53935;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="470" y="885" width="120" height="60" as="geometry"/>
         </mxCell>
-        <mxCell id="w4_pytest" value="pytest + allure" style="rounded=1;whiteSpace=wrap;fillColor=#fce4ec;strokeColor=#e53935;fontSize=10;fontFamily=system-ui;html=1;" vertex="1" parent="1">
-          <mxGeometry x="1020" y="175" width="150" height="30" as="geometry"/>
+        <mxCell id="w4out" value="&lt;font color='#b71c1c'&gt;✓ review-report.json　✓ execution-report.json　✓ 验收报告&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fce4ec;strokeColor=#f48fb1;fontSize=10;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="965" width="540" height="30" as="geometry"/>
         </mxCell>
-        <mxCell id="w4_report" value="&lt;b&gt;验收报告&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;fillColor=#ffcdd2;strokeColor=#b71c1c;fontSize=10;fontFamily=system-ui;html=1;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="1020" y="218" width="150" height="30" as="geometry"/>
+
+        <!-- ===== 最终输出 ===== -->
+        <mxCell id="output" value="&lt;b style='font-size:15px'&gt;pytest 测试套件&lt;/b&gt;　&lt;font color='#558b2f'&gt;interface + scenariotest · L1-L5 分层断言 · allure 报告&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcedc8;strokeColor=#689f38;fontSize=12;strokeWidth=2;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="100" y="1060" width="500" height="50" as="geometry"/>
         </mxCell>
-        <!-- Output -->
-        <mxCell id="output" value="&lt;b&gt;pytest 测试套件&lt;/b&gt;&lt;br&gt;&lt;font style='font-size:9px'&gt;interface + scenariotest&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;fillColor=#dcedc8;strokeColor=#689f38;fontSize=11;fontFamily=system-ui;html=1;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="1220" y="140" width="160" height="55" as="geometry"/>
-        </mxCell>
-        <!-- Connections -->
-        <mxCell id="e1" style="strokeColor=#616161;strokeWidth=2;endArrow=block;endFill=1;" edge="1" parent="1" source="entry" target="precheck"/>
-        <mxCell id="e2" style="strokeColor=#388e3c;strokeWidth=2;endArrow=block;endFill=1;" edge="1" parent="1" source="precheck" target="w1_title"/>
-        <mxCell id="e3" style="strokeColor=#616161;strokeWidth=2;endArrow=block;endFill=1;" edge="1" parent="1" source="w1_verify" target="w2_title"/>
-        <mxCell id="e4" style="strokeColor=#f57c00;strokeWidth=2;endArrow=block;endFill=1;" edge="1" parent="1" source="w2_confirm" target="w3_title"/>
-        <mxCell id="e5" style="strokeColor=#1976d2;strokeWidth=2;endArrow=block;endFill=1;" edge="1" parent="1" source="w3_verify" target="w4_title"/>
-        <mxCell id="e6" style="strokeColor=#c62828;strokeWidth=2;endArrow=block;endFill=1;" edge="1" parent="1" source="w4_report" target="output"/>
-        <!-- Parallel indicators -->
-        <mxCell id="p1" value="⚡ 并行" style="text;fontSize=9;fontColor=#4caf50;fontStyle=2;fontFamily=system-ui;html=1;html=1;" vertex="1" parent="1">
-          <mxGeometry x="440" y="110" width="50" height="15" as="geometry"/>
-        </mxCell>
-        <mxCell id="p2" value="⚡ 并行" style="text;fontSize=9;fontColor=#1565c0;fontStyle=2;fontFamily=system-ui;html=1;html=1;" vertex="1" parent="1">
-          <mxGeometry x="840" y="110" width="50" height="15" as="geometry"/>
-        </mxCell>
+
+        <!-- ===== 连接箭头 ===== -->
+        <mxCell id="e1" style="rounded=1;strokeColor=#9e9e9e;strokeWidth=2;endArrow=blockThin;endFill=1;" edge="1" parent="1" source="entry" target="precheck"/>
+        <mxCell id="e2" style="rounded=1;strokeColor=#388e3c;strokeWidth=2;endArrow=blockThin;endFill=1;" edge="1" parent="1" source="precheck" target="w1label"/>
+        <mxCell id="e3" style="rounded=1;strokeColor=#f57c00;strokeWidth=2;endArrow=blockThin;endFill=1;" edge="1" parent="1" source="w1out" target="w2label"/>
+        <mxCell id="e4" style="rounded=1;strokeColor=#1976d2;strokeWidth=2;endArrow=blockThin;endFill=1;" edge="1" parent="1" source="w2out" target="w3label"/>
+        <mxCell id="e5" style="rounded=1;strokeColor=#e53935;strokeWidth=2;endArrow=blockThin;endFill=1;" edge="1" parent="1" source="w3out" target="w4label"/>
+        <mxCell id="e6" style="rounded=1;strokeColor=#689f38;strokeWidth=3;endArrow=blockThin;endFill=1;" edge="1" parent="1" source="w4out" target="output"/>
+
       </root>
     </mxGraphModel>
   </diagram>
