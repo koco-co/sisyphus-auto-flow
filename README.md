@@ -128,7 +128,7 @@
 
 ## 断言层级
 
-![Assertion Layers](assets/assertion-layers.png)
+![Assertion Layers](assets/assertion_layers.svg)
 
 | 层级 | 名称 | 覆盖内容 | 生成条件 |
 |------|------|----------|----------|
