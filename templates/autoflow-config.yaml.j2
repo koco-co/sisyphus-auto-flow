@@ -1,0 +1,63 @@
+# autoflow-config.yaml — 由 /using-autoflow 自动生成
+# 此文件记录项目配置，供 /autoflow 全流程读取
+
+project:
+  type: {{ project_type }}  # existing | new
+  test_dir: {{ test_dir | default("tests") }}
+  test_types:
+{%- for t in test_types %}
+    - {{ t }}
+{%- endfor %}
+
+{%- if project_type == "existing" %}
+  code_style:
+    api_pattern: {{ code_style.api_pattern | default("inline") }}
+{%- if code_style.api_pattern_path %}
+    api_pattern_path: {{ code_style.api_pattern_path }}
+{%- endif %}
+    request_class: {{ code_style.request_class | default("httpx") }}
+{%- if code_style.request_class_path %}
+    request_class_path: {{ code_style.request_class_path }}
+{%- endif %}
+    assertion_style: "{{ code_style.assertion_style | default('assert resp.status_code == 200') }}"
+    auth_method: {{ code_style.auth_method | default("cookie") }}
+{%- if code_style.auth_class %}
+    auth_class: {{ code_style.auth_class }}
+    auth_class_path: {{ code_style.auth_class_path }}
+{%- endif %}
+    allure_enabled: {{ code_style.allure_enabled | default(true) | lower }}
+  package_manager: {{ package_manager | default("uv") }}
+{%- endif %}
+
+{%- if industry %}
+industry:
+  domain: "{{ industry.domain }}"
+  system_type: "{{ industry.system_type }}"
+  team_size: "{{ industry.team_size }}"
+  auth_complexity: {{ industry.auth_complexity }}
+  special_needs:
+{%- for need in industry.special_needs | default([]) %}
+    - {{ need }}
+{%- endfor %}
+  compliance:
+{%- for c in industry.compliance | default([]) %}
+    - "{{ c }}"
+{%- endfor %}
+{%- endif %}
+
+{%- if solution %}
+solution:
+  name: "{{ solution.name }}"
+  fit_score: {{ solution.fit_score }}
+  stack:
+    framework: {{ solution.stack.framework }}
+    http_client: {{ solution.stack.http_client }}
+    report: {{ solution.stack.report }}
+    mock: {{ solution.stack.mock | default("none") }}
+    ci: {{ solution.stack.ci | default("none") }}
+    data_management: {{ solution.stack.data_management | default("none") }}
+  industry_specific:
+{%- for item in solution.industry_specific | default([]) %}
+    - "{{ item }}"
+{%- endfor %}
+{%- endif %}
