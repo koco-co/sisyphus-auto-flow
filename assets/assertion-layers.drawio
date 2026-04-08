@@ -1,0 +1,32 @@
+<mxfile host="cli-anything-drawio" modified="2026-04-08" agent="sisyphus-autoflow" version="24.0.0">
+  <diagram id="assertions" name="Assertion Layers">
+    <mxGraphModel dx="1400" dy="300" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="300" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="l1" value="&lt;b&gt;L1 协议层&lt;/b&gt;&lt;br&gt;&lt;font style='font-size:10px;color:#2e7d32'&gt;HTTP 状态码&lt;br&gt;响应时间&lt;br&gt;Content-Type&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;fillColor=#c8e6c9;strokeColor=#388e3c;fontSize=12;fontFamily=system-ui;html=1;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="60" width="200" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="l2" value="&lt;b&gt;L2 结构层&lt;/b&gt;&lt;br&gt;&lt;font style='font-size:10px;color:#1565c0'&gt;Schema 验证&lt;br&gt;字段类型&lt;br&gt;存在性检查&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;fillColor=#bbdefb;strokeColor=#1976d2;fontSize=12;fontFamily=system-ui;html=1;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="280" y="60" width="200" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="l3" value="&lt;b&gt;L3 数据层&lt;/b&gt;&lt;br&gt;&lt;font style='font-size:10px;color:#f57f17'&gt;值范围 · 枚举&lt;br&gt;分页不变量&lt;br&gt;格式校验&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;fillColor=#fff9c4;strokeColor=#f9a825;fontSize=12;fontFamily=system-ui;html=1;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="530" y="60" width="200" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="l4" value="&lt;b&gt;L4 业务层&lt;/b&gt;&lt;br&gt;&lt;font style='font-size:10px;color:#d84315'&gt;状态机 · CRUD&lt;br&gt;一致性&lt;br&gt;数据库验证&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;fillColor=#ffccbc;strokeColor=#e64a19;fontSize=12;fontFamily=system-ui;html=1;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="780" y="60" width="200" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="l5" value="&lt;b&gt;L5 AI 推断层&lt;/b&gt;&lt;br&gt;&lt;font style='font-size:10px;color:#6a1b9a'&gt;隐式规则&lt;br&gt;安全边界&lt;br&gt;异常路径&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;fillColor=#e1bee7;strokeColor=#8e24aa;fontSize=12;fontFamily=system-ui;html=1;shadow=1;" vertex="1" parent="1">
+          <mxGeometry x="1030" y="60" width="200" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="a1" style="strokeColor=#9e9e9e;strokeWidth=3;endArrow=block;endFill=1;" edge="1" parent="1" source="l1" target="l2"/>
+        <mxCell id="a2" style="strokeColor=#9e9e9e;strokeWidth=3;endArrow=block;endFill=1;" edge="1" parent="1" source="l2" target="l3"/>
+        <mxCell id="a3" style="strokeColor=#9e9e9e;strokeWidth=3;endArrow=block;endFill=1;" edge="1" parent="1" source="l3" target="l4"/>
+        <mxCell id="a4" style="strokeColor=#9e9e9e;strokeWidth=3;endArrow=block;endFill=1;" edge="1" parent="1" source="l4" target="l5"/>
+        <mxCell id="coverage" value="&lt;font style='font-size:10px;color:#666'&gt;100% 覆盖 ←───────────────────────────── 按需生成 (源码感知)&lt;/font&gt;" style="text;fontSize=10;fontFamily=system-ui;html=1;" vertex="1" parent="1">
+          <mxGeometry x="30" y="170" width="1200" height="20" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

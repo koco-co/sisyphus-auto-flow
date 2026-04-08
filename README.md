@@ -1,520 +1,407 @@
-# sisyphus-autoflow
+<div align="center">
 
-> HAR 驱动、源码感知的 API 接口自动化测试 — 由 Claude Code 驱动
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/Sisyphus--AutoFlow-1.1-7C3AED?style=for-the-badge&logoColor=white">
+  <img alt="Sisyphus-AutoFlow" src="https://img.shields.io/badge/Sisyphus--AutoFlow-1.1-7C3AED?style=for-the-badge&logoColor=white">
+</picture>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Python 3.12+](https://img.shields.io/badge/Python-3.12+-blue.svg)](pyproject.toml)
-[![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-Plugin-purple.svg)](PLUGIN.md)
+# <img src="https://em-content.zobj.net/source/apple/391/test-tube_1f9ea.png" width="32" /> Sisyphus-AutoFlow
 
----
+### HAR-Driven, Source-Aware API Test Generation
 
-## 特性
+<br />
 
-- **HAR → pytest**：丢入浏览器录制的 HAR 文件，自动获得生产级 pytest 测试套件，无需手写样板代码
-- **源码感知**：读取后端源码（Controller → Service → DAO），深度理解业务逻辑，生成有意义的断言
-- **L1-L5 断言层级**：覆盖从 HTTP 状态码验证（L1）到 AI 推断的隐式业务规则（L5）的完整断言体系
-- **多 Agent 协同**：5 个专业 AI Agent 组成 4 波并行编排流水线，充分利用模型能力分工
-- **交互式确认**：AI 提议测试场景清单，你确认后再生成代码 — 始终掌控生成结果
+**一句话说清**：丢入浏览器 HAR 抓包，自动出生产级 pytest 测试套件。
 
----
+基于 **Claude Code Plugin** 构建的 AI 接口自动化测试生成引擎，5 个 Agent 协同、4 波并行编排。
 
-## 快速开始
+<br />
 
-```bash
-# 1. 安装插件（任选一种方式，详见下方"安装"章节）
-claude plugins marketplace add koco-co/sisyphus-autoflow
-claude plugins install sisyphus-autoflow
+📡 HAR 解析 &nbsp;·&nbsp; 🔍 源码追踪 &nbsp;·&nbsp; 🧪 L1-L5 断言 &nbsp;·&nbsp; ⚡ 并行生成 &nbsp;·&nbsp; 📊 Allure 报告
 
-# 2. 进入你的测试项目目录（新项目或已有项目均可）
-cd /path/to/your-test-project
+<br />
 
-# 3. 初始化环境（首次使用）
-#    在 Claude Code 中输入：
-/using-autoflow
+[![Python 3.12+](https://img.shields.io/badge/Python-3.12+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org/)
+[![Claude Code](https://img.shields.io/badge/Claude_Code-Plugin-7C3AED?style=flat-square&logo=anthropic&logoColor=white)](https://claude.ai/code)
+[![pytest](https://img.shields.io/badge/pytest-Framework-0A9EDC?style=flat-square&logo=pytest&logoColor=white)](https://pytest.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](./LICENSE)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg?style=flat-square)](./pyproject.toml)
 
-# 4. 丢入 HAR 文件，生成测试套件
-/autoflow ./recordings/api.har
+<br />
+
+```
+📡 HAR ─── /autoflow ──→ 🔍 源码分析 ──→ 🧪 pytest 测试套件 ──→ 📊 Allure 报告
 ```
 
+</div>
+
+<br />
+
 ---
 
-## 工作原理
+## 目录
 
-sisyphus-autoflow 将 HAR 文件到测试套件的全过程分为 4 个执行波次，每波内部按依赖关系选择并行或串行调度：
+- [核心特性](#核心特性)
+- [工作流总览](#工作流总览)
+- [断言层级](#断言层级)
+- [快速开始](#快速开始)
+- [使用指南](#使用指南)
+- [融入已有项目](#融入已有项目)
+- [配置参考](#配置参考)
+- [项目结构](#项目结构)
+- [开发](#开发)
+- [Roadmap](#roadmap)
+- [License](#license)
 
-```mermaid
-graph TD
-    A["/autoflow har-file"] --> B{环境就绪?}
-    B -->|否| C["/using-autoflow"]
-    C --> B
-    B -->|是| D{恢复会话?}
-    D -->|新建| E["Wave 1: 解析与准备"]
-    D -->|恢复| F[加载检查点]
+---
 
-    subgraph W1["Wave 1 — 并行"]
-        E --> E1["har-parser\nhaiku"]
-        E --> E2["repo-syncer\nhaiku"]
-    end
+## 核心特性
 
-    E1 --> H["parsed.json"]
-    E2 --> I["repos synced"]
-    H --> J
-    I --> J
+| 特性 | 说明 |
+|------|------|
+| **HAR → pytest** | 浏览器录制的 HAR 文件自动转化为生产级 pytest 测试套件，零样板代码 |
+| **源码感知** | 读取后端源码（Controller → Service → DAO），深度理解业务逻辑 |
+| **L1-L5 断言** | 从 HTTP 状态码（L1）到 AI 推断的隐式业务规则（L5），5 层断言递进覆盖 |
+| **5 Agent 协同** | har-parser · repo-syncer · scenario-analyzer · case-writer · case-reviewer |
+| **4 波并行编排** | 解析 → 分析 → 生成 → 评审，波次内并行、波次间串行，充分利用 AI 能力 |
+| **旧项目无侵入** | 自动检测已有项目的测试目录、API 封装、断言风格，沿用原有规范 |
+| **交互式确认** | 每个关键节点提供确认清单，支持 `--quick` 跳过和断点恢复 |
+| **验证透明** | 每波次结束明确输出验证摘要（py_compile / import 检查 / 断言覆盖率） |
 
-    J["Wave 2: 场景分析"] --> K["scenario-analyzer\nopus"]
+---
 
-    subgraph W2["Wave 2 — 串行"]
-        K --> K1["源码追踪\nController→Service→DAO"]
-        K1 --> K2["场景生成\nHAR+CRUD+边界+L1-L5"]
-        K2 --> K3["用户确认清单"]
-    end
+## 工作流总览
 
-    K3 -->|确认| L["Wave 3: 代码生成"]
+![AutoFlow Pipeline](assets/workflow.png)
 
-    subgraph W3["Wave 3 — 并行扇出"]
-        L --> L1["case-writer #1\nsonnet"]
-        L --> L2["case-writer #2\nsonnet"]
-        L --> L3["case-writer #3\nsonnet"]
-    end
+<details>
+<summary><b>4 波次详解</b></summary>
 
-    L1 --> M
-    L2 --> M
-    L3 --> M
+### Wave 1：解析与准备（并行）
 
-    M["Wave 4: 评审与交付"] --> N["case-reviewer\nopus"]
+| Agent | 模型 | 输入 | 输出 |
+|-------|------|------|------|
+| **har-parser** | haiku | HAR 文件 | `.autoflow/parsed.json` |
+| **repo-syncer** | haiku | `repo-profiles.yaml` | `.autoflow/repo-status.json` |
 
-    subgraph W4["Wave 4 — 串行"]
-        N --> N1["代码评审+自动修正"]
-        N1 --> N2["pytest 执行+自愈"]
-        N2 --> N3["验收报告"]
-        N3 --> N4["外部通知"]
-    end
+两个 Agent 并行执行。无源码仓库时自动跳过 repo-syncer。
 
-    F --> G{哪个 Wave?}
-    G -->|1| E
-    G -->|2| J
-    G -->|3| L
-    G -->|4| M
+### Wave 2：场景分析（交互式）
 
-    style W1 fill:#e8f5e9,stroke:#4caf50
-    style W2 fill:#fff3e0,stroke:#ff9800
-    style W3 fill:#e3f2fd,stroke:#2196f3
-    style W4 fill:#fce4ec,stroke:#e91e63
-```
+| Agent | 模型 | 职责 |
+|-------|------|------|
+| **scenario-analyzer** | opus | 源码追踪 + 场景推断 + 断言计划 |
+
+- 追踪 Controller → Service → DAO 调用链
+- 推断正常路径、异常路径、边界值、CRUD 闭环等 8 种场景类别
+- 规划每个场景的 L1-L5 断言层级
+- 生成确认清单，用户确认后继续
+
+### Wave 3：代码生成（并行扇出）
+
+| Agent | 模型 | 职责 |
+|-------|------|------|
+| **case-writer ×N** | sonnet | 按模块并行生成 pytest 测试文件 |
+
+- 每个服务模块独立一个 Agent
+- 遵循项目已有的代码风格（API 封装、Request 工具类、allure 标注等）
+- 生成后自动进行 py_compile 验证
+
+### Wave 4：评审与交付（交互式）
+
+| Agent | 模型 | 职责 |
+|-------|------|------|
+| **case-reviewer** | opus | 5 维评审 + 自动修复 + 执行 |
+
+5 个评审维度：
+1. **断言完整性** — L1-L5 逐层验证
+2. **场景完整性** — CRUD 闭环、异常路径、边界值
+3. **源码交叉核验** — 断言值与源码实际逻辑一致
+4. **代码质量** — 无硬编码、不可变模式、规模限制
+5. **可运行性** — 导入完整、语法正确、fixture 可用
+
+偏差率处理：`< 15%` 静默修复 · `15-40%` 修复并警告 · `> 40%` 阻断
+
+</details>
 
 ---
 
 ## 断言层级
 
-测试用例按照 5 层断言体系组织，层层递进，从协议合规到 AI 推断的隐式业务规则：
+![Assertion Layers](assets/assertion-layers.png)
 
-```mermaid
-graph LR
-    subgraph L1["L1 协议层"]
-        L1a[HTTP 状态码]
-        L1b[响应时间]
-        L1c[Content-Type]
-    end
-    subgraph L2["L2 结构层"]
-        L2a[Pydantic 模型]
-        L2b[字段存在性]
-        L2c[类型正确性]
-    end
-    subgraph L3["L3 数据层"]
-        L3a[值范围]
-        L3b[枚举合法性]
-        L3c[格式校验]
-    end
-    subgraph L4["L4 业务层"]
-        L4a[状态机]
-        L4b[CRUD 一致性]
-        L4c[数据库验证]
-    end
-    subgraph L5["L5 AI推断层"]
-        L5a[隐式规则]
-        L5b[安全边界]
-        L5c[异常路径]
-    end
-    L1 --> L2 --> L3 --> L4 --> L5
-    style L1 fill:#c8e6c9,stroke:#388e3c
-    style L2 fill:#bbdefb,stroke:#1976d2
-    style L3 fill:#fff9c4,stroke:#f9a825
-    style L4 fill:#ffccbc,stroke:#e64a19
-    style L5 fill:#e1bee7,stroke:#8e24aa
-```
+| 层级 | 名称 | 覆盖内容 | 生成条件 |
+|------|------|----------|----------|
+| **L1** | 协议层 | HTTP 状态码 · 响应时间 · Content-Type | 所有接口（100%） |
+| **L2** | 结构层 | Schema 验证 · 字段类型 · 存在性检查 | 有响应体的接口 |
+| **L3** | 数据层 | 值范围 · 枚举合法性 · 分页不变量 | 有源码参考时 |
+| **L4** | 业务层 | 状态机 · CRUD 一致性 · 数据库验证 | 配置了数据库连接 |
+| **L5** | AI 推断层 | 隐式规则 · 安全边界 · 异常路径 | 源码追踪 + 高置信度 |
 
-每层断言示例参见 [references/assertion-examples.md](references/assertion-examples.md)。
+每层断言代码示例参见 [references/assertion-examples.md](references/assertion-examples.md)。
 
 ---
 
-## 安装
+## 快速开始
 
-### 前提条件
+### 前置条件
 
 - [Claude Code](https://claude.ai/code) 已安装
 - Python >= 3.12
-- [uv](https://docs.astral.sh/uv/) 包管理器
+- [uv](https://docs.astral.sh/uv/) 包管理器（推荐）或 pip
 - Git
 
-### 方式一：Claude Code Plugin 安装（推荐）
+### 安装
 
 ```bash
-# 步骤 1: 添加仓库为 marketplace
+# 1. 添加仓库为 marketplace
 claude plugins marketplace add koco-co/sisyphus-autoflow
 
-# 步骤 2: 从 marketplace 安装插件
+# 2. 安装插件
 claude plugins install sisyphus-autoflow
 
 # 验证安装
 claude plugins list
 ```
 
-安装完成后，`/using-autoflow` 和 `/autoflow` 命令即可在 Claude Code 中使用。
-
-**更新插件：**
-
-```bash
-claude plugins update sisyphus-autoflow
-```
-
-**卸载插件：**
-
-```bash
-claude plugins uninstall sisyphus-autoflow
-```
-
-### 方式二：从 GitHub 手动下载到项目中
-
-适用于不想注册 marketplace，或需要自定义修改插件代码的场景。
+<details>
+<summary><b>其他安装方式</b></summary>
 
 **全局安装（所有项目可用）：**
 
 ```bash
-# 克隆到 Claude Code 全局 plugins 目录
 git clone https://github.com/koco-co/sisyphus-autoflow.git ~/.claude/plugins/sisyphus-autoflow
-
-# 安装插件的 Python 依赖
-cd ~/.claude/plugins/sisyphus-autoflow
-uv sync
+cd ~/.claude/plugins/sisyphus-autoflow && uv sync
 ```
 
-**项目级安装（仅当前项目可用）：**
+**项目级安装：**
 
 ```bash
-cd /path/to/your-test-project
-
-# 克隆到项目的 .claude/plugins 目录
 mkdir -p .claude/plugins
 git clone https://github.com/koco-co/sisyphus-autoflow.git .claude/plugins/sisyphus-autoflow
-
-# 安装插件的 Python 依赖
 cd .claude/plugins/sisyphus-autoflow && uv sync && cd ../../..
-
-# 将 .claude/plugins/ 加入 .gitignore（可选，避免提交到项目仓库）
-echo ".claude/plugins/" >> .gitignore
 ```
 
-安装后重启 Claude Code（或新开对话），`/using-autoflow` 和 `/autoflow` 命令即可使用。
+</details>
 
-### 方式三：手动复制到项目配置目录
-
-如果你不想以 Plugin 形式安装，可以将 skills 和 agents 直接复制到项目的 `.claude/` 目录：
+### 初始化 + 生成
 
 ```bash
+# 1. 进入测试项目目录
 cd /path/to/your-test-project
 
-# 克隆仓库到临时目录
-git clone https://github.com/koco-co/sisyphus-autoflow.git /tmp/sisyphus-autoflow
-
-# 复制 skills、agents、prompts、scripts 到项目中
-mkdir -p .claude/skills .claude/agents
-cp -r /tmp/sisyphus-autoflow/skills/* .claude/skills/
-cp -r /tmp/sisyphus-autoflow/agents/* .claude/agents/
-cp -r /tmp/sisyphus-autoflow/prompts .claude/prompts
-cp -r /tmp/sisyphus-autoflow/scripts .claude/scripts
-cp -r /tmp/sisyphus-autoflow/templates .claude/templates
-
-# 安装 Python 依赖到项目中
-uv add pydantic jinja2 pyyaml httpx
-
-# 清理临时目录
-rm -rf /tmp/sisyphus-autoflow
-```
-
-> 注意：此方式需要手动调整 SKILL.md 中的 `${CLAUDE_SKILL_DIR}` 路径，使其指向 `.claude/` 下的实际位置。后续更新需要重新手动复制。
-
----
-
-## 融入到已有项目
-
-### 场景 A：全新的自动化测试项目
-
-从零开始创建一个新的 API 自动化测试项目：
-
-```bash
-# 1. 创建项目目录
-mkdir my-api-tests && cd my-api-tests
-git init
-
-# 2. 确保已安装 sisyphus-autoflow（任选上述三种安装方式之一）
-
-# 3. 在 Claude Code 中运行初始化向导
+# 2. 初始化环境（首次使用，在 Claude Code 中输入）
 /using-autoflow
-```
 
-向导会引导你完成：
-
-| 步骤 | 说明 |
-|------|------|
-| 环境检测 | 检查 Python 3.12+、uv、Git 是否就绪 |
-| 技术栈选择 | 选择推荐栈（pytest+httpx+pydantic+allure）或自定义 |
-| 源码仓库配置 | 输入后端仓库 Git 地址，自动 clone 到 `.repos/` 并生成 `repo-profiles.yaml` |
-| 连接配置 | 配置目标服务 Base URL、认证方式、数据库（可选）、通知 Webhook（可选） |
-| 脚手架生成 | 自动生成项目结构、`pyproject.toml`、`conftest.py`、`CLAUDE.md` |
-
-完成后项目结构如下：
-
-```
-my-api-tests/
-├── .autoflow/                      # autoflow 工作目录（gitignored）
-├── .repos/                         # 源码仓库（gitignored）
-│   └── {group}/{repo}/
-├── .trash/                         # HAR 回收站（gitignored）
-├── repo-profiles.yaml              # 接口→仓库映射配置（纳入版本管理）
-├── tests/
-│   ├── conftest.py                 # 全局 fixtures（client, db, auth）
-│   ├── interface/                  # 接口测试（单接口独立验证）
-│   │   └── {service_module}/
-│   │       └── test_{module}.py
-│   ├── scenariotest/               # 场景测试（CRUD 闭环、业务流程）
-│   │   └── {service_module}/
-│   │       └── test_{module}_crud.py
-│   └── unittest/                   # 单元测试（工具函数、校验器）
-│       └── ...
-├── core/
-│   ├── client.py                   # APIClient（httpx 封装，不可变 dataclass）
-│   ├── assertions.py               # L1-L5 断言工具函数
-│   ├── db.py                       # DBHelper（可选，仅在配置了 DB 时生成）
-│   └── models/                     # 公共 Pydantic 响应模型
-├── .env                            # 环境变量（gitignored）
-├── .env.example                    # 环境变量示例
-├── pyproject.toml                  # 项目配置（uv + pytest + ruff + pyright）
-├── Makefile                        # 快捷命令
-├── CLAUDE.md                       # 自动生成的项目指令（Claude Code 读取）
-└── .gitignore
-```
-
-### 场景 B：融入已有的自动化测试项目
-
-如果你已经有一个运行中的自动化测试项目（例如基于 pytest+requests 的项目），可以将 autoflow 作为增量能力添加进来：
-
-```bash
-# 1. 进入已有项目目录
-cd /path/to/existing-test-project
-
-# 2. 确保已安装 sisyphus-autoflow（任选上述三种安装方式之一）
-
-# 3. 在 Claude Code 中运行初始化向导
-/using-autoflow
-```
-
-**向导会自动检测已有项目的规范**，具体行为：
-
-| 检测项 | 已有项目行为 |
-|--------|-------------|
-| `pyproject.toml` | 检测到已存在 → **不覆盖**，保留你的配置 |
-| `conftest.py` | 检测到已存在 → **不覆盖**，仅提示需要手动添加的 fixtures |
-| 代码风格（ruff/flake8/black） | 扫描已有配置 → **询问你**：沿用项目规范 or 使用插件推荐规范 |
-| 测试目录结构 | 扫描已有结构 → **询问你**：使用已有结构 or 创建 interface/scenariotest/unittest 子目录 |
-| `.env` | 检测到已存在 → **追加**缺失的变量，不修改已有变量 |
-
-**优先级规则：项目已有规范 > 插件推荐规范**
-
-初始化完成后，只会新增 autoflow 需要的文件，不会破坏你已有的项目结构：
-
-```
-existing-test-project/
-├── ... (你已有的文件保持不动)
-│
-├── .autoflow/                      # 新增：autoflow 工作目录
-├── .repos/                         # 新增：源码仓库
-├── .trash/                         # 新增：HAR 回收站
-├── repo-profiles.yaml              # 新增：接口映射配置
-├── core/                           # 新增：autoflow 基础设施
-│   ├── client.py                   #   （如果你已有 client 封装，向导会询问是否跳过）
-│   ├── assertions.py
-│   └── db.py                       #   （可选）
-└── CLAUDE.md                       # 新增：项目指令（指向你的规范+插件规范）
-```
-
-之后正常使用 `/autoflow <har-file>` 生成测试用例，生成的代码会遵循你项目已有的规范。
-
-### 场景 C：不使用 Claude Code（纯脚本模式）
-
-如果你的团队不使用 Claude Code，仍然可以使用 autoflow 的 Python 脚本作为工具链：
-
-```bash
-# 克隆仓库
-git clone https://github.com/koco-co/sisyphus-autoflow.git
-cd sisyphus-autoflow && uv sync
-
-# 单独使用 HAR 解析器
-uv run python -c "
-from scripts.har_parser import parse_har
-from pathlib import Path
-result = parse_har(Path('path/to/your.har'), Path('repo-profiles.yaml'))
-print(f'解析到 {len(result.endpoints)} 个接口')
-print(result.model_dump_json(indent=2))
-"
-
-# 单独使用项目脚手架生成
-uv run python -c "
-from scripts.scaffold import ScaffoldConfig, generate_project
-from pathlib import Path
-config = ScaffoldConfig(
-    project_root=Path('/path/to/your-project'),
-    project_name='mytest',
-    base_url='http://your-server:8080',
-    db_configured=True,
-)
-created = generate_project(config)
-print(f'已创建 {len(created)} 个文件')
-"
-
-# 单独使用通知器
-uv run python -c "
-from scripts.notifier import NotificationPayload, send_notification
-payload = NotificationPayload(title='测试完成', body='通过: 87, 失败: 3')
-send_notification('dingtalk', 'https://oapi.dingtalk.com/robot/send?access_token=xxx', payload)
-"
-```
-
-> 注意：纯脚本模式只提供基础工具能力（HAR 解析、脚手架、通知），不包含 AI 驱动的场景分析和用例生成。完整的 AI 工作流需要通过 Claude Code 使用。
-
----
-
-## 使用
-
-### 步骤 1：初始化项目环境
-
-第一次使用时，在 Claude Code 中运行：
-
-```
-/using-autoflow
-```
-
-### 步骤 2：录制 HAR 文件
-
-在浏览器开发者工具（Network 面板）中操作目标系统，导出 `.har` 文件。
-
-### 步骤 3：生成测试套件
-
-```
+# 3. 丢入 HAR 文件，生成测试套件
 /autoflow ./recordings/api.har
 ```
 
-**常用参数：**
+---
+
+## 使用指南
+
+### 步骤 1：初始化项目
+
+在 Claude Code 中输入：
+
+```
+/using-autoflow
+```
+
+交互式向导会引导完成：
+
+| 步骤 | 说明 |
+|------|------|
+| 环境检测 | Python 3.12+ · uv/pip · Git · 插件依赖 |
+| 项目扫描 | 已有项目自动检测测试目录、API 封装模式、断言风格 |
+| 测试类型选择 | 多选：interface / scenariotest / unittest |
+| 仓库配置 | 输入后端仓库 URL，自动 clone + URL 前缀映射 |
+| 连接配置 | Base URL · 认证方式 · 数据库（可选）· 通知（可选） |
+
+生成配置文件：`repo-profiles.yaml` · `autoflow-config.yaml` · `CLAUDE.md`
+
+### 步骤 2：录制 HAR 文件
+
+在浏览器开发者工具 Network 面板中操作目标系统，导出 `.har` 文件。
+
+### 步骤 3：生成测试
 
 ```bash
-# 跳过确认清单，直接生成（快速模式）
-/autoflow ./api.har --quick
+# 标准模式（全流程 + 交互确认）
+/autoflow ./recordings/api.har
 
-# 恢复上次中断的会话
+# 快速模式（跳过确认清单）
+/autoflow ./recordings/api.har --quick
+
+# 恢复中断的会话
 /autoflow --resume
 ```
 
+### 步骤 4：验收
+
+生成完成后，AutoFlow 会输出精确的验收命令：
+
+```bash
+# 预检（仅收集，不执行）
+pytest tests/interface/ tests/scenariotest/ --collect-only
+
+# 执行测试 + 生成 Allure 结果
+pytest tests/interface/ tests/scenariotest/ -v --alluredir=.autoflow/allure-results
+
+# 查看 Allure 报告
+allure serve .autoflow/allure-results
+```
+
+> 注：实际命令会根据项目的包管理器（uv/pip/poetry）和测试目录自动适配。
+
 ---
 
-## 配置
+## 融入已有项目
+
+### 场景 A：全新项目
+
+```bash
+mkdir my-api-tests && cd my-api-tests && git init
+# 在 Claude Code 中：/using-autoflow
+```
+
+向导会创建完整的项目脚手架：`tests/` · `core/` · `conftest.py` · `pyproject.toml` · `Makefile`
+
+### 场景 B：已有自动化项目
+
+```bash
+cd /path/to/existing-test-project
+# 在 Claude Code 中：/using-autoflow
+```
+
+**向导会自动检测并适配已有项目**：
+
+| 检测项 | 行为 |
+|--------|------|
+| 测试目录（`testcases/` / `tests/`） | 沿用已有目录，不创建新目录 |
+| API 封装（Enum / 常量 / inline） | 生成代码遵循已有模式 |
+| Request 工具类（BaseRequests / httpx） | 继承已有基类 |
+| 断言风格（`resp['code'] == 1`） | 使用项目已有的断言模式 |
+| 认证方式（Cookie / Token） | 提供「复用旧项目逻辑」选项 |
+| `.env` 文件 | 不修改，AutoFlow 配置写入 `.autoflow/config.yaml` |
+
+**原则：项目已有规范 > 插件默认规范，不覆盖、不破坏。**
+
+### 场景 C：纯脚本模式（不使用 Claude Code）
+
+```bash
+git clone https://github.com/koco-co/sisyphus-autoflow.git
+cd sisyphus-autoflow && uv sync
+
+# HAR 解析
+uv run python -c "
+from scripts.har_parser import parse_har
+from pathlib import Path
+result = parse_har(Path('your.har'), Path('repo-profiles.yaml'))
+print(f'解析到 {len(result.endpoints)} 个接口')
+"
+```
+
+> 纯脚本模式仅提供 HAR 解析、脚手架、通知等基础工具，不含 AI 场景分析和用例生成。
+
+---
+
+## 配置参考
 
 ### repo-profiles.yaml
 
-定义 API 接口路径与后端源码仓库的映射关系：
+```yaml
+repos:
+  - name: backend-service
+    local_path: .repos/group/backend/
+    remote: https://git.example.com/group/backend.git
+    branch: release_1.0
+    url_prefixes:
+      - /api/v1
+```
+
+### autoflow-config.yaml
 
 ```yaml
-profiles:
-  - name: dt-center-assets               # 仓库标识名
-    path: .repos/CustomItem/dt-center-assets  # 本地克隆路径
-    branch: release_6.2.x                # 跟踪分支
-    url_prefixes:                         # 该仓库处理的 API 路径前缀
-      - /dassets/v1/
-    modules:                              # 可选：源码模块匹配模式
-      - pattern: "com.dtstack.assets.controller"
-        description: "控制器层"
-      - pattern: "com.dtstack.assets.service"
-        description: "服务层"
-
-  - name: dt-center-metadata
-    path: .repos/CustomItem/dt-center-metadata
-    branch: release_6.2.x
-    url_prefixes:
-      - /dmetadata/v1/
-
-db:                                       # 可选：数据库连接（L4 断言需要）
-  host: 172.16.115.247
-  port: 3306
-  user: root
-  password: "${DB_PASSWORD}"              # 引用 .env 中的变量
-  database: dtinsight
-
-notifications:                            # 可选：外部通知
-  - type: dingtalk                        # dingtalk / feishu / slack / custom
-    webhook: "${DINGTALK_WEBHOOK}"
+project:
+  type: existing          # existing | new
+  test_dir: testcases     # 测试入口目录
+  test_types:             # 要生成的测试类型
+    - interface
+    - scenariotest
+  code_style:
+    api_pattern: enum     # enum | constant | inline
+    request_class: BaseRequests
+    assertion_style: "resp['code'] == 1"
+    auth_method: reuse    # cookie | token | password | none | reuse
+    allure_enabled: true
+  package_manager: pip    # uv | pip | poetry
 ```
 
 ### 环境变量（.env）
 
 | 变量名 | 必填 | 说明 |
 |--------|------|------|
-| `BASE_URL` | 是 | 被测服务基础 URL，如 `http://172.16.115.247` |
-| `AUTH_COOKIE` | 是 | 认证 Cookie 或 Token |
+| `BASE_URL` | 是 | 被测服务基础 URL |
+| `AUTH_COOKIE` | 否 | 认证 Cookie（或 `AUTH_TOKEN`） |
 | `DB_PASSWORD` | 否 | 数据库密码（L4 断言需要） |
-| `DINGTALK_WEBHOOK` | 否 | 钉钉机器人 Webhook 地址 |
-| `FEISHU_WEBHOOK` | 否 | 飞书机器人 Webhook 地址 |
-| `SLACK_WEBHOOK` | 否 | Slack Incoming Webhook 地址 |
+| `DINGTALK_WEBHOOK` | 否 | 钉钉 Webhook |
+| `FEISHU_WEBHOOK` | 否 | 飞书 Webhook |
+| `SLACK_WEBHOOK` | 否 | Slack Webhook |
 
 ---
 
-## 初始化流程
+## 项目结构
 
-`/using-autoflow` 命令执行的完整步骤：
-
-```mermaid
-graph TD
-    A["/using-autoflow"] --> B["Step 1: 环境检测"]
-    B --> C{Python >= 3.12?}
-    C -->|否| D["提示安装"]
-    C -->|是| E{uv?}
-    E -->|否| F["提示安装"]
-    E -->|是| G{已有项目?}
-    G -->|是| H["扫描现有规范\n不覆盖已有配置"]
-    G -->|否| I["选择技术栈\nA=推荐 / B=经典 / C=自定义"]
-    H --> J["Step 3: 仓库配置"]
-    I --> J
-    J --> K["Step 4: 连接配置\nBase URL + Auth + DB(可选) + 通知(可选)"]
-    K --> L["Step 5: 脚手架生成"]
-    L --> M["初始化完成"]
+```text
+sisyphus-autoflow/
+├── skills/                          # Claude Code 技能定义
+│   ├── autoflow/SKILL.md            #   /autoflow — 主流程（4 波编排）
+│   └── using-autoflow/SKILL.md      #   /using-autoflow — 初始化向导
+├── agents/                          # 5 个 Agent 定义
+│   ├── har-parser.md                #   HAR 解析（haiku）
+│   ├── repo-syncer.md               #   仓库同步（haiku）
+│   ├── scenario-analyzer.md         #   场景分析（opus）
+│   ├── case-writer.md               #   代码生成（sonnet）
+│   └── case-reviewer.md             #   评审修复（opus）
+├── prompts/                         # Agent 规范文档
+│   ├── assertion-layers.md          #   L1-L5 断言规范
+│   ├── code-style-python.md         #   Python 测试代码风格
+│   ├── har-parse-rules.md           #   HAR 解析过滤规则
+│   ├── review-checklist.md          #   评审清单与质量标准
+│   └── scenario-enrich.md           #   8 种场景类别生成策略
+├── scripts/                         # Python 工具库
+│   ├── har_parser.py                #   HAR 解析与去重
+│   ├── scaffold.py                  #   脚手架生成（new/existing 模式）
+│   ├── state_manager.py             #   波次检查点管理
+│   ├── test_runner.py               #   pytest 执行包装（uv/pip/poetry）
+│   ├── repo_sync.py                 #   Git 同步
+│   └── notifier.py                  #   钉钉/飞书/Slack 通知
+├── templates/                       # Jinja2 模板
+├── references/                      # 参考文档
+├── assets/                          # 流程图资源
+├── .claude-plugin/                  # 插件元数据
+├── pyproject.toml                   # 项目配置
+├── Makefile                         # 开发命令
+└── LICENSE
 ```
 
 ---
 
 ## 开发
 
-### 本地开发
-
 ```bash
 git clone https://github.com/koco-co/sisyphus-autoflow.git
 cd sisyphus-autoflow
 uv sync --dev
 
-make test       # 运行测试（含覆盖率）
+make test       # 运行测试
 make lint       # ruff 代码检查
 make typecheck  # pyright 类型检查
-make ci         # 一键运行 lint + typecheck + test
+make ci         # lint + typecheck + test
 make fmt        # 代码格式化
 ```
-
-技术栈选型说明见 [references/tech-stack-options.md](references/tech-stack-options.md)。
 
 ---
 
@@ -522,19 +409,17 @@ make fmt        # 代码格式化
 
 | 版本 | 主要特性 |
 |------|---------|
-| v1.0.0（当前） | HAR 解析、4 波编排、L1-L5 全层断言、DB 验证、检查点恢复、外部通知、双发布 |
-| v1.1.0 | 多语言后端支持（TypeScript、Go、Python 后端） |
-| v1.2.0 | OpenAPI/Swagger spec 作为补充输入源 |
-| v1.3.0 | 测试数据工厂（自动生成测试数据 fixtures） |
-| v2.0.0 | UI 自动化集成（Playwright）、性能测试 |
+| **v1.0** | HAR 解析 · 4 波编排 · L1-L5 断言 · DB 验证 · 检查点恢复 · 外部通知 |
+| **v1.1**（当前） | 旧项目适配 · 验证透明度 · 验收命令优化 · 路径修复 · 测试类型选择 |
+| v1.2 | 多语言后端支持（TypeScript · Go · Python 后端） |
+| v1.3 | OpenAPI / Swagger spec 作为补充输入源 |
+| v2.0 | UI 自动化集成（Playwright）· 性能测试 |
 
 ---
 
 ## Contributing
 
-欢迎贡献代码、文档和测试用例！
-
-提交 PR 前请确保：
+欢迎提交 Issue 和 Pull Request。提交前请确保：
 
 ```bash
 make ci   # 所有检查通过
@@ -544,4 +429,4 @@ make ci   # 所有检查通过
 
 ## License
 
-本项目基于 [MIT License](LICENSE) 开源。
+[MIT](./LICENSE) &copy; 2026 Sisyphus-AutoFlow contributors
