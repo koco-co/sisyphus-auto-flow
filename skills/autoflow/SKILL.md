@@ -3,7 +3,7 @@ name: autoflow
 description: "从 HAR 文件生成 pytest 测试套件，结合源码进行 AI 智能分析。触发方式：/autoflow <har-path>、'从 HAR 生成测试'、提供 .har 文件路径。"
 argument-hint: "<har-file-path> [--quick] [--resume]"
 user-invocable: true
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Agent, AskUserQuestion
+allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Agent, AskUserQuestion, TaskCreate, TaskUpdate, TaskList
 ---
 
 # AutoFlow：HAR 转 Pytest 测试生成技能
