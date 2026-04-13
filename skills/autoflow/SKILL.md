@@ -43,6 +43,12 @@ TaskCreate(subject="验收报告与归档", activeForm="生成验收报告",
 
 ## 预检阶段
 
+将任务 1 标记为进行中：
+
+```
+TaskUpdate(taskId=<task_1_id>, status="in_progress")
+```
+
 设置路径变量：
 
 ```
@@ -167,9 +173,21 @@ HAR 文件：      <path>  （<N> 条记录）
 模式：          quick=<是/否>  resume=<是/否>
 ```
 
+预检完成，标记任务 1：
+
+```
+TaskUpdate(taskId=<task_1_id>, status="completed")
+```
+
 ---
 
 ## 第一波次：解析与准备（并行）
+
+将任务 2 标记为进行中：
+
+```
+TaskUpdate(taskId=<task_2_id>, status="in_progress")
+```
 
 ```
 [1/4] 解析与准备 ▶ 开始...
@@ -240,9 +258,21 @@ python3 ${CLAUDE_SKILL_DIR}/../../scripts/state_manager.py advance_wave --wave 1
 [1/4] 解析与准备 ✓ 完成 (<N> 条记录解析完毕，匹配 <M> 个服务)
 ```
 
+标记任务 2 完成：
+
+```
+TaskUpdate(taskId=<task_2_id>, status="completed")
+```
+
 ---
 
 ## 第二波次：场景分析（顺序执行，交互式）
+
+将任务 3 标记为进行中：
+
+```
+TaskUpdate(taskId=<task_3_id>, status="in_progress")
+```
 
 ```
 [2/4] 场景分析 ▶ 开始...
@@ -394,9 +424,21 @@ python3 ${CLAUDE_SKILL_DIR}/../../scripts/state_manager.py advance_wave --wave 2
 [2/4] 场景分析 ✓ 完成 (<N> 个场景，覆盖 <M> 个接口)
 ```
 
+标记任务 3 完成：
+
+```
+TaskUpdate(taskId=<task_3_id>, status="completed")
+```
+
 ---
 
 ## 第三波次：代码生成（并行扇出）
+
+将任务 4 标记为进行中：
+
+```
+TaskUpdate(taskId=<task_4_id>, status="in_progress")
+```
 
 ```
 [3/4] 代码生成 ▶ 开始...
@@ -477,9 +519,21 @@ python3 ${CLAUDE_SKILL_DIR}/../../scripts/state_manager.py advance_wave --wave 3
 [3/4] 代码生成 ✓ 完成 (<N> 个文件，<M> 个测试函数)
 ```
 
+标记任务 4 完成：
+
+```
+TaskUpdate(taskId=<task_4_id>, status="completed")
+```
+
 ---
 
 ## 第四波次：评审 + 执行 + 交付（顺序执行，交互式）
+
+将任务 5 标记为进行中：
+
+```
+TaskUpdate(taskId=<task_5_id>, status="in_progress")
+```
 
 ```
 [4/4] 评审与交付 ▶ 开始...
@@ -533,6 +587,13 @@ $RUNNER $GENERATED_FILES --alluredir=.autoflow/allure-results -v --tb=short -q \
 
 ```bash
 python3 ${CLAUDE_SKILL_DIR}/../../scripts/test_runner.py --output .autoflow/execution-report.json
+```
+
+标记任务 5 完成，将任务 6 标记为进行中：
+
+```
+TaskUpdate(taskId=<task_5_id>, status="completed")
+TaskUpdate(taskId=<task_6_id>, status="in_progress")
 ```
 
 **验收报告**
@@ -611,4 +672,10 @@ AutoFlow 完成
 
   # 查看 Allure 报告
   allure serve .autoflow/allure-results
+```
+
+标记任务 6 完成：
+
+```
+TaskUpdate(taskId=<task_6_id>, status="completed")
 ```
