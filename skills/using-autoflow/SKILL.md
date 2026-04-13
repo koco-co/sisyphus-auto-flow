@@ -14,6 +14,34 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Agent, AskUserQuestion, WebS
 
 ---
 
+## 任务初始化
+
+在流程开始时，批量创建 6 个任务以可视化全流程进度。任务 2 和 3 使用通用措辞，在分支确定后动态更新：
+
+```
+TaskCreate(subject="环境检测 + 智能分类", activeForm="检测项目环境",
+  description="子步骤：工具版本检查 → 依赖检测与安装 → 重初始化检测 → 项目标志扫描 → 判定 existing_auto / new")
+
+TaskCreate(subject="项目分析", activeForm="分析项目特征",
+  description="子步骤：待分类后更新（分支 A: project-scanner 深度扫描；分支 B: 行业画像收集 + industry-researcher 调研）")
+
+TaskCreate(subject="确认与选择", activeForm="确认分析结果",
+  description="子步骤：待分类后更新（分支 A: 7 维度逐项确认；分支 B: 方案推荐 + 试运行）")
+
+TaskCreate(subject="源码仓库配置", activeForm="配置源码仓库",
+  description="子步骤：收集仓库 URL → git clone → URL 前缀映射 → 写入 repo-profiles.yaml")
+
+TaskCreate(subject="连接配置", activeForm="配置连接信息",
+  description="子步骤：Base URL → 认证方式与凭证 → 数据库（可选）→ 通知 Webhook（可选）")
+
+TaskCreate(subject="脚手架生成 + 配置验证", activeForm="生成项目脚手架",
+  description="子步骤：渲染 autoflow-config.yaml → 运行 scaffold.py → 生成 CLAUDE.md → smoke test → 输出初始化摘要")
+```
+
+将每个 TaskCreate 返回的 ID 依次记为 `<task_1_id>` 到 `<task_6_id>`，后续步骤引用这些 ID 进行状态更新。
+
+---
+
 ## 第零步：环境检测 + 智能分类
 
 ### 环境检测
