@@ -185,12 +185,193 @@ def detect_http_client(project_root: Path) -> dict[str, Any]:
     }
 
 
+def detect_assertion_style(test_dir: Path) -> dict[str, Any]:
+    """检测断言风格：dict_get / bracket / attr / status_only。
+
+    扫描测试文件中的 assert 语句，统计各类断言的占比。
+    """
+    counts: dict[str, int] = {"dict_get": 0, "bracket": 0, "attr": 0, "status_only": 0, "total": 0}
+    samples: list[str] = []
+
+    test_files = list(test_dir.rglob("test_*.py")) + list(test_dir.rglob("*_test.py"))
+    for py_file in test_files[:30]:  # 最多扫 30 个文件
+        try:
+            tree = ast.parse(py_file.read_text(), filename=str(py_file))
+        except SyntaxError:
+            continue
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Assert) and node.test:
+                counts["total"] += 1
+                source = ast.unparse(node.test)
+                if ".get(" in source:
+                    counts["dict_get"] += 1
+                elif source.startswith("resp[") or source.startswith("result["):
+                    counts["bracket"] += 1
+                elif ".status_code" in source:
+                    counts["status_only"] += 1
+                elif ".get(" not in source and "[" not in source:
+                    counts["attr"] += 1
+                if len(samples) < 3 and counts["total"] <= 5:
+                    if isinstance(node.test, ast.Compare):
+                        samples.append(ast.unparse(node.test))
+
+    if counts["total"] == 0:
+        return {"style": "unknown", "common_checks": []}
+
+    dominant = max(counts, key=lambda k: counts[k] if k != "total" else 0)
+    return {
+        "style": dominant,
+        "common_checks": samples,
+    }
+
+
+def detect_allure_pattern(project_root: Path) -> dict[str, Any]:
+    """检测 Allure 使用模式。"""
+    allure_epic = 0
+    allure_title = 0
+    allure_step_deco = 0
+    allure_step_ctx = 0
+    enabled = False
+
+    for py_file in list(project_root.rglob("test_*.py")) + list(project_root.rglob("*_test.py")):
+        try:
+            text = py_file.read_text(errors="ignore")
+        except Exception:
+            continue
+        if "import allure" in text or "from allure" in text:
+            enabled = True
+        if "@allure.epic" in text:
+            allure_epic += 1
+        if "@allure.title" in text:
+            allure_title += 1
+        if "with allure.step" in text:
+            allure_step_ctx += 1
+        if "@allure.step" in text:
+            allure_step_deco += 1
+
+    if not enabled:
+        return {"enabled": False}
+
+    return {
+        "enabled": True,
+        "epic_level": allure_epic > 0,
+        "title_level": "both" if allure_title > 0 else "none",
+        "step_pattern": "context" if allure_step_ctx > allure_step_deco else ("decorator" if allure_step_deco > 0 else "none"),
+    }
+
+
+def detect_service_layer(project_root: Path) -> dict[str, Any]:
+    """检测是否使用 Service→Request 分层模式。"""
+    utils_dir = project_root / "utils"
+    if not utils_dir.is_dir():
+        return {"detected": False}
+
+    service_dirs = []
+    request_dirs = []
+
+    for d in utils_dir.rglob("*"):
+        if d.is_dir() and d.name in ("services", "requests"):
+            if d.name == "services":
+                service_dirs.append(str(d.relative_to(project_root)))
+            else:
+                request_dirs.append(str(d.relative_to(project_root)))
+
+    return {
+        "detected": len(service_dirs) > 0 and len(request_dirs) > 0,
+        "pattern": "service_request" if (service_dirs and request_dirs) else "direct",
+    }
+
+
+def detect_auth_method(project_root: Path) -> dict[str, Any]:
+    """检测认证方式：cookie / token / basic / none。"""
+    auth_keywords: dict[str, int] = {"cookie": 0, "token": 0, "oauth": 0, "basic": 0}
+
+    for py_file in list(project_root.rglob("conftest.py")) + list((project_root / "utils").rglob("*.py")):
+        if ".venv" in str(py_file) or "__pycache__" in str(py_file):
+            continue
+        try:
+            text = py_file.read_text(errors="ignore")
+        except Exception:
+            continue
+        text_lower = text.lower()
+        if "cookie" in text_lower and "cooki" in text_lower:
+            auth_keywords["cookie"] += 1
+        if "token" in text_lower and "bearer" in text_lower:
+            auth_keywords["token"] += 1
+        if "oauth" in text_lower:
+            auth_keywords["oauth"] += 1
+        if "basic" in text_lower and "auth" in text_lower:
+            auth_keywords["basic"] += 1
+
+    total = sum(auth_keywords.values())
+    if total == 0:
+        return {"method": "none"}
+    dominant = max(auth_keywords, key=lambda k: auth_keywords[k])
+    return {"method": dominant}
+
+
+def detect_test_data_pattern(project_root: Path) -> dict[str, Any]:
+    """检测测试数据模式：inline / separated / fixture。"""
+    testdata_dir = project_root / "testdata"
+    if testdata_dir.is_dir():
+        data_files = list(testdata_dir.rglob("*_data.py"))
+        test_dir = project_root / "testcases"
+        test_files = list(test_dir.rglob("test_*.py")) if test_dir.is_dir() else []
+        mirror = False
+        if data_files and test_files:
+            test_rel = {str(p.relative_to(test_dir)) for p in test_files}
+            data_rel = {str(p.relative_to(testdata_dir)).replace("_data.py", "_test.py") for p in data_files}
+            mirror = bool(data_rel & test_rel)
+        return {
+            "pattern": "separated",
+            "data_dir": "testdata",
+            "mirror_structure": mirror,
+        }
+
+    fixtures_dir = project_root / "tests" / "fixtures"
+    if fixtures_dir.is_dir() and list(fixtures_dir.rglob("*.py")):
+        return {"pattern": "fixture", "data_dir": None, "mirror_structure": False}
+
+    return {"pattern": "inline", "data_dir": None, "mirror_structure": False}
+
+
+def detect_module_structure(project_root: Path) -> dict[str, Any]:
+    """检测项目模块结构：single / multi_module。"""
+    modules: list[str] = []
+    api_dir = project_root / "api"
+    if api_dir.is_dir():
+        modules = [d.name for d in api_dir.iterdir() if d.is_dir() and not d.name.startswith("__")]
+    test_dir = project_root / "testcases" / "scenariotest"
+    if test_dir.is_dir():
+        test_modules = [d.name for d in test_dir.iterdir() if d.is_dir() and not d.name.startswith("__")]
+        if test_modules:
+            modules = list(set(modules + test_modules))
+
+    return {
+        "isolation": "multi_module" if len(modules) > 1 else "single",
+        "modules": sorted(modules),
+    }
+
+
 def scan_project(project_root: Path) -> dict[str, Any]:
     """执行所有检测并返回完整的惯例指纹。"""
+    test_dir_candidates = [
+        project_root / "testcases",
+        project_root / "tests",
+        project_root / "test",
+    ]
+    test_dir = next((d for d in test_dir_candidates if d.is_dir()), project_root)
+
     return {
         "scanned_at": datetime.now(UTC).isoformat(),
         "api": detect_api_pattern(project_root),
         "http_client": detect_http_client(project_root),
+        "assertion": detect_assertion_style(test_dir),
+        "allure": detect_allure_pattern(project_root),
+        "service_layer": detect_service_layer(project_root),
+        "auth": detect_auth_method(project_root),
+        "test_data": detect_test_data_pattern(project_root),
+        "module_structure": detect_module_structure(project_root),
     }
 
 
