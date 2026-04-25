@@ -20,6 +20,7 @@ Controller 层 → Service 层 → DAO/Mapper 层
 使用 `Grep` 查找与接口路径匹配的路由注解。
 
 示例（Java Spring）：
+
 ```bash
 # 搜索路由注解
 grep -r "@PostMapping.*recentQuery" .repos/
@@ -33,6 +34,7 @@ grep -r "@RequestMapping.*datamap" .repos/
 从 Controller 方法找到 Service 调用（如 `xxxService.recentQuery()`），通过阅读 Service 接口和实现文件跟踪调用链。
 
 从 Service 层提取的内容：
+
 - 业务逻辑分支（`if/else`、`switch/case`）
 - 权限检查（`@PreAuthorize`、`hasPermission()`、角色检查）
 - 校验逻辑（超出 `@Valid` 注解范围的手动校验）
@@ -45,6 +47,7 @@ grep -r "@RequestMapping.*datamap" .repos/
 从 Service 找到数据库操作，阅读 Mapper XML 或 JPA Repository。
 
 从 DAO 层提取的内容：
+
 - 表名和关键字段
 - SQL 条件（`WHERE is_deleted = 0`、软删除模式）
 - 字段约束（NOT NULL、UNIQUE、VARCHAR 长度）
@@ -73,6 +76,7 @@ grep -r "@RequestMapping.*datamap" .repos/
 **信号**：`parsed.json` 中 `response.status == 200` 且响应体非空的任意接口。
 
 **场景示例**：
+
 ```
 name: "query_recent_datamap_with_recorded_params"
 description: "回放 HAR 中录制的查询请求，验证响应结构一致"
@@ -92,10 +96,12 @@ assertion_layers: [L1, L2, L3]
 **含义**：创建 → 查询 → 更新 → 删除的完整生命周期测试序列。确保 API 创建的数据能被查询、修改和删除。
 
 **源码信号**：
+
 - 同一 Controller 类中有命名为以下动词的方法：`add/create/save` + `query/list/page/get` + `update/edit/modify` + `delete/remove`
 - 常见命名模式（Java）：`add`、`update`、`delete`、`pageXxx`、`listXxx`、`getById`
 
 **检测算法**：
+
 ```python
 crud_signals = {
     "create": ["add", "create", "save", "insert"],
@@ -107,6 +113,7 @@ crud_signals = {
 ```
 
 **场景示例**：
+
 ```
 name: "sync_task_full_crud_lifecycle"
 description: "add → pageTask（验证创建） → update → pageTask（验证更新） → delete → pageTask（验证不存在）"
@@ -128,6 +135,7 @@ assertion_layers: [L1, L2, L3, L4]
 **含义**：验证 API 能正确拒绝无效或缺失输入，并返回合适错误响应。
 
 **源码信号**：
+
 - Controller 方法参数上的 `@Valid`、`@Validated` 注解
 - DTO/VO 字段上的 `@NotNull`、`@NotBlank`、`@NotEmpty`
 - 手动校验：`if (param == null) throw new ...`
@@ -135,14 +143,15 @@ assertion_layers: [L1, L2, L3, L4]
 
 **场景模板**（对每个有校验的接口至少生成以下场景）：
 
-| 场景 | 请求修改方式 | 期望状态码 |
-|------|------------|-----------|
-| 缺少必填字段 | 删除某个 `@NotNull` 字段 | 400 或业务错误码 |
-| `@NotBlank` 字段为空字符串 | 将字段设为 `""` | 400 或业务错误码 |
-| 类型错误 | 期望整数字段传入字符串 | 400 |
-| 必填对象为 null | 将必填对象请求体设为 `null` | 400 |
+| 场景                       | 请求修改方式                | 期望状态码       |
+| -------------------------- | --------------------------- | ---------------- |
+| 缺少必填字段               | 删除某个 `@NotNull` 字段    | 400 或业务错误码 |
+| `@NotBlank` 字段为空字符串 | 将字段设为 `""`             | 400 或业务错误码 |
+| 类型错误                   | 期望整数字段传入字符串      | 400              |
+| 必填对象为 null            | 将必填对象请求体设为 `null` | 400              |
 
 **示例**：
+
 ```
 name: "add_sync_task_missing_task_name"
 description: "taskName 标注了 @NotNull — 不传该字段提交，期望返回错误"
@@ -163,6 +172,7 @@ expected: response.code != 1（或 status 400）
 **含义**：在有效输入范围的边界处测试——最小值、最大值和刚超出边界的值。
 
 **源码信号**：
+
 - 数值字段上的 `@Min(N)`、`@Max(N)`
 - 字符串/集合上的 `@Size(min=N, max=M)`
 - 小数字段的 `@DecimalMin`、`@DecimalMax`
@@ -171,14 +181,15 @@ expected: response.code != 1（或 status 400）
 
 **场景模板**：
 
-| 字段类型 | 需生成的边界场景 |
-|---------|--------------|
-| 分页 `pageSize` | `pageSize=0`、`pageSize=1`、`pageSize=100`、`pageSize=10000` |
-| 分页 `pageNum` | `pageNum=0`、`pageNum=1` |
-| `@Min(1) @Max(100) int level` | `level=0`、`level=1`、`level=100`、`level=101` |
-| 字符串 `@Size(max=255)` | 255 字符字符串、256 字符字符串 |
+| 字段类型                      | 需生成的边界场景                                             |
+| ----------------------------- | ------------------------------------------------------------ |
+| 分页 `pageSize`               | `pageSize=0`、`pageSize=1`、`pageSize=100`、`pageSize=10000` |
+| 分页 `pageNum`                | `pageNum=0`、`pageNum=1`                                     |
+| `@Min(1) @Max(100) int level` | `level=0`、`level=1`、`level=100`、`level=101`               |
+| 字符串 `@Size(max=255)`       | 255 字符字符串、256 字符字符串                               |
 
 **示例**：
+
 ```
 name: "page_task_with_zero_page_size"
 description: "pageSize=0 低于最小值，应返回错误或空结果，而非 500"
@@ -198,6 +209,7 @@ assertion_layers: [L1, L2]
 **含义**：验证未授权用户无法访问受保护接口。
 
 **源码信号**：
+
 - `@PreAuthorize("hasRole('ADMIN')")` 或类似注解
 - `@RequiresPermission`、`@Secured`
 - 手动权限检查：`if (!user.hasPermission(xxx)) throw new UnauthorizedException()`
@@ -205,13 +217,14 @@ assertion_layers: [L1, L2]
 
 **场景模板**：
 
-| 场景 | 模拟方式 | 期望结果 |
-|------|---------|---------|
-| 未认证 | 不带 Cookie/token 发送请求 | 401 或重定向 |
-| 令牌过期 | 使用明显无效的令牌 | 401 |
+| 场景     | 模拟方式                     | 期望结果       |
+| -------- | ---------------------------- | -------------- |
+| 未认证   | 不带 Cookie/token 发送请求   | 401 或重定向   |
+| 令牌过期 | 使用明显无效的令牌           | 401            |
 | 权限不足 | 使用低权限用户令牌（如可用） | 403 或业务错误 |
 
 **示例**：
+
 ```
 name: "preview_data_without_permission"
 description: "DataTableService.previewData 调用 judgeOpenDataPreviewByParam — 未认证访问应失败"
@@ -232,6 +245,7 @@ confidence: HIGH
 **含义**：验证实体状态转换遵循定义的状态机——合法转换成功，非法转换失败。
 
 **源码信号**：
+
 - 含状态值的 `Enum`：`DRAFT`、`RUNNING`、`SUCCESS`、`FAILED`、`CANCELLED`
 - 状态转换方法：`startTask()`、`stopTask()`、`pauseTask()`
 - 转换守卫：`if (task.status != DRAFT) throw new InvalidStateException()`
@@ -239,13 +253,14 @@ confidence: HIGH
 
 **场景模板**：
 
-| 场景 | 测试内容 |
-|------|---------|
-| 合法正向转换 | 通过 `start` API 执行 `DRAFT → RUNNING` |
+| 场景         | 测试内容                                            |
+| ------------ | --------------------------------------------------- |
+| 合法正向转换 | 通过 `start` API 执行 `DRAFT → RUNNING`             |
 | 非法反向转换 | 尝试 `start` 一个已处于 `RUNNING` 的任务 → 期望报错 |
 | 非法跳跃转换 | 尝试将 `DRAFT` 任务直接标记为 `complete` → 期望报错 |
 
 **示例**：
+
 ```
 name: "sync_task_cannot_start_when_running"
 description: "SyncTaskService：RUNNING 状态的任务不能再次启动"
@@ -265,6 +280,7 @@ assertion_layers: [L1, L2, L4]
 **含义**：验证操作能正确级联到关联实体——删除父实体应清理子实体，或以约束错误拒绝操作。
 
 **源码信号**：
+
 - Service 层中的跨服务调用：`metadataService.deleteByDataMapId(id)`
 - Mapper/DAO SQL JOIN 中的外键关系
 - 操作多张表的方法上的 `@Transactional` 注解
@@ -272,13 +288,14 @@ assertion_layers: [L1, L2, L4]
 
 **场景模板**：
 
-| 场景 | 测试内容 |
-|------|---------|
+| 场景                 | 测试内容                                          |
+| -------------------- | ------------------------------------------------- |
 | 删除有子记录的父记录 | 创建父记录 + 子记录 → 删除父记录 → 验证子记录状态 |
-| 更新父记录影响子记录 | 更新父记录名称 → 验证子记录能看到更新后的名称 |
-| 跨服务一致性 | 在服务 A 中创建 → 验证服务 B 中可见 |
+| 更新父记录影响子记录 | 更新父记录名称 → 验证子记录能看到更新后的名称     |
+| 跨服务一致性         | 在服务 A 中创建 → 验证服务 B 中可见               |
 
 **示例**：
+
 ```
 name: "delete_datasource_cascades_sync_tasks"
 description: "删除数据源应级联删除（或报错阻止）相关同步任务"
@@ -298,6 +315,7 @@ db_required: true
 **含义**：验证 API 能优雅处理错误条件——返回有意义的错误码/消息，而非 500 错误。
 
 **源码信号**：
+
 - `catch` 块：`catch (DuplicateKeyException e) → return Result.fail("xxx 已存在")`
 - 自定义异常类及其消息
 - `throw new XxxNotFoundException(...)` 模式
@@ -305,13 +323,14 @@ db_required: true
 
 **必须生成的最少异常场景**（对每个接口至少生成以下场景）：
 
-| 场景 | 测试输入 | 期望结果 |
-|------|---------|---------|
+| 场景       | 测试输入                             | 期望结果             |
+| ---------- | ------------------------------------ | -------------------- |
 | 资源不存在 | 使用不存在的 ID（如 `id=999999999`） | 业务错误码，而非 500 |
-| 重复创建 | 创建相同资源两次 | 第二次返回错误 |
-| 无效引用 | 引用不存在的父级 ID | 校验错误 |
+| 重复创建   | 创建相同资源两次                     | 第二次返回错误       |
+| 无效引用   | 引用不存在的父级 ID                  | 校验错误             |
 
 **示例**：
+
 ```
 name: "get_nonexistent_datamap_returns_error"
 description: "dataMapId=999999999 不存在 — 验证优雅报错，而非 500"
@@ -377,13 +396,14 @@ grep -n "@PostMapping\|@GetMapping\|@PutMapping\|@DeleteMapping\|@RequestMapping
 
 生成所有场景后，将每个场景分配到正确的测试类型：
 
-| 测试类型 | 目录 | 存放内容 |
-|---------|------|---------|
-| `interface` | `tests/interface/{service_module}/` | 单接口测试：HAR 直接场景、参数校验、边界值、权限检查、异常路径 |
-| `scenariotest` | `tests/scenariotest/{service_module}/` | 多步骤测试：CRUD 闭环、状态转换、关联数据联动 |
-| `unittest` | `tests/unittest/{module}/` | 业务逻辑单元测试：校验器、工具函数、纯函数（非 API 调用） |
+| 测试类型       | 目录                                   | 存放内容                                                       |
+| -------------- | -------------------------------------- | -------------------------------------------------------------- |
+| `interface`    | `tests/interface/{service_module}/`    | 单接口测试：HAR 直接场景、参数校验、边界值、权限检查、异常路径 |
+| `scenariotest` | `tests/scenariotest/{service_module}/` | 多步骤测试：CRUD 闭环、状态转换、关联数据联动                  |
+| `unittest`     | `tests/unittest/{module}/`             | 业务逻辑单元测试：校验器、工具函数、纯函数（非 API 调用）      |
 
 **命名规则**：
+
 - 接口测试文件：`test_{module}.py`（如 `test_datamap.py`）
 - 场景测试文件：`test_{module}_crud.py` 或 `test_{module}_{flow_name}.py`
 - 单元测试文件：`test_{class_name}.py`
@@ -394,16 +414,16 @@ grep -n "@PostMapping\|@GetMapping\|@PutMapping\|@DeleteMapping\|@RequestMapping
 
 对每个生成的场景，指定适用的断言层（Assertion Layer）。将此作为 `assertion-layers.md` 的输入。
 
-| 场景类别 | L1 | L2 | L3 | L4 | L5 |
-|---------|----|----|----|----|-----|
-| HAR 直接场景 | 必须 | 必须 | 必须 | 可选 | 可选 |
-| CRUD 闭环 | 必须 | 必须 | 必须 | 必须 | 必须 |
-| 参数校验 | 必须 | 必须 | 可选 | — | — |
-| 边界值 | 必须 | 必须 | 必须 | — | 可选 |
-| 权限校验 | 必须 | 必须 | — | 可选 | 高置信度 |
-| 状态转换 | 必须 | 必须 | 必须 | 必须 | 可选 |
-| 关联数据联动 | 必须 | 必须 | — | 必须 | 可选 |
-| 异常路径 | 必须 | 必须 | 可选 | 可选 | — |
+| 场景类别     | L1   | L2   | L3   | L4   | L5       |
+| ------------ | ---- | ---- | ---- | ---- | -------- |
+| HAR 直接场景 | 必须 | 必须 | 必须 | 可选 | 可选     |
+| CRUD 闭环    | 必须 | 必须 | 必须 | 必须 | 必须     |
+| 参数校验     | 必须 | 必须 | 可选 | —    | —        |
+| 边界值       | 必须 | 必须 | 必须 | —    | 可选     |
+| 权限校验     | 必须 | 必须 | —    | 可选 | 高置信度 |
+| 状态转换     | 必须 | 必须 | 必须 | 必须 | 可选     |
+| 关联数据联动 | 必须 | 必须 | —    | 必须 | 可选     |
+| 异常路径     | 必须 | 必须 | 可选 | 可选 | —        |
 
 ---
 
@@ -435,7 +455,7 @@ grep -n "@PostMapping\|@GetMapping\|@PutMapping\|@DeleteMapping\|@RequestMapping
       "controller": "SyncTaskController",
       "endpoints": {
         "create": "POST /dmetadata/v1/syncTask/add",
-        "read":   "POST /dmetadata/v1/syncTask/pageTask",
+        "read": "POST /dmetadata/v1/syncTask/pageTask",
         "update": "POST /dmetadata/v1/syncTask/update",
         "delete": "POST /dmetadata/v1/syncTask/delete"
       }

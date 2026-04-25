@@ -17,9 +17,10 @@ unittest/     —       —       必须    必须    可选
 ```
 
 图例：
+
 - `必须` — 该测试类型必须始终生成这些断言
 - `可选` — 当源码提供足够信号时生成
-- `—`    — 该测试类型不适用
+- `—` — 该测试类型不适用
 
 ---
 
@@ -31,10 +32,10 @@ unittest/     —       —       必须    必须    可选
 
 ### 生成规则
 
-| 断言 | 来源 | 公式 |
-|------|------|------|
-| `status_code` | HAR 的 `response.status` | 使用 HAR 中的精确值 |
-| `max_time_ms` | HAR 的 `response.time_ms` | `max(har_time_ms × 3, 1000)` — 最小 1000ms |
+| 断言           | 来源                       | 公式                                             |
+| -------------- | -------------------------- | ------------------------------------------------ |
+| `status_code`  | HAR 的 `response.status`   | 使用 HAR 中的精确值                              |
+| `max_time_ms`  | HAR 的 `response.time_ms`  | `max(har_time_ms × 3, 1000)` — 最小 1000ms       |
 | `content_type` | 响应 `Content-Type` 请求头 | 使用 HAR 中的精确值，通常为 `"application/json"` |
 
 ### 代码模式
@@ -50,6 +51,7 @@ assert_protocol(
 ```
 
 `assert_protocol` 实现（已在 `core/assertions.py` 中）：
+
 ```python
 def assert_protocol(
     response: httpx.Response,
@@ -82,25 +84,25 @@ def assert_protocol(
 
    从 HAR 响应体 JSON 推断字段类型：
 
-   | JSON 值 | Pydantic 类型 |
-   |--------|--------------|
-   | `"string"` | `str` |
-   | `123` | `int` |
-   | `1.23` | `float` |
-   | `true/false` | `bool` |
-   | `null` + 有时存在 | `T \| None = None` |
-   | `[]`（空列表） | `list[SubModel]` 或 `list[Any]` |
-   | `{}`（对象） | 嵌套 `BaseModel` 子类 |
+   | JSON 值           | Pydantic 类型                   |
+   | ----------------- | ------------------------------- |
+   | `"string"`        | `str`                           |
+   | `123`             | `int`                           |
+   | `1.23`            | `float`                         |
+   | `true/false`      | `bool`                          |
+   | `null` + 有时存在 | `T \| None = None`              |
+   | `[]`（空列表）    | `list[SubModel]` 或 `list[Any]` |
+   | `{}`（对象）      | 嵌套 `BaseModel` 子类           |
 
 2. **与源码 DTO/VO 交叉验证。**
 
    若有源码，找到响应 DTO/VO 类，利用注解精化模型：
 
-   | 源码注解 | Pydantic 等价写法 |
-   |---------|-----------------|
-   | `@NotNull` | 必填字段（无默认值） |
-   | 无 `@NotNull` | 可选：`field: Type \| None = None` |
-   | `@NotBlank String` | `str`（必填） |
+   | 源码注解           | Pydantic 等价写法                  |
+   | ------------------ | ---------------------------------- |
+   | `@NotNull`         | 必填字段（无默认值）               |
+   | 无 `@NotNull`      | 可选：`field: Type \| None = None` |
+   | `@NotBlank String` | `str`（必填）                      |
 
 3. **嵌套对象 → 嵌套 Pydantic 模型。**
 
@@ -185,6 +187,7 @@ public enum MetaTypeEnum {
 ```
 
 生成的断言：
+
 ```python
 VALID_META_TYPES = {1, 4, 5, 6, 7, 10}  # 来自 MetaTypeEnum — 定义为模块级常量
 for item in body.data:
@@ -220,12 +223,12 @@ assert body.code in BUSINESS_SUCCESS_CODES, f"业务错误：code={body.code}, m
 
 从字段命名约定推断：
 
-| 字段名模式 | 校验方式 |
-|----------|---------|
-| `phone`、`mobile`、`phoneNo` | `re.match(r"^1[3-9]\d{9}$", value)` |
-| `email` | `re.match(r"[^@]+@[^@]+\.[^@]+", value)` |
-| `createTime`、`updateTime` | `datetime.fromisoformat(value)` 或整数时间戳 |
-| `gmtCreate`、`gmtModified` | 整数时间戳 `> 0` |
+| 字段名模式                   | 校验方式                                     |
+| ---------------------------- | -------------------------------------------- |
+| `phone`、`mobile`、`phoneNo` | `re.match(r"^1[3-9]\d{9}$", value)`          |
+| `email`                      | `re.match(r"[^@]+@[^@]+\.[^@]+", value)`     |
+| `createTime`、`updateTime`   | `datetime.fromisoformat(value)` 或整数时间戳 |
+| `gmtCreate`、`gmtModified`   | 整数时间戳 `> 0`                             |
 
 仅在字段在 **HAR 响应体中非空时**才生成格式断言。
 
@@ -317,6 +320,7 @@ if db:
 ```
 
 **DB 断言规则**：
+
 - `add` → 验证记录存在，字段值匹配
 - `update` → 验证变更字段已更新，未修改字段保持不变
 - `delete` → 若检测到软删除模式（`is_deleted` 字段），验证 `is_deleted=1`；若硬删除，验证记录不存在
@@ -343,6 +347,7 @@ assert second_resp.json()["code"] == 1, "幂等更新重复执行应成功"
 ### 每条 L5 断言的强制要求
 
 每条 L5 断言必须包含如下注释：
+
 1. 源文件路径和行号
 2. 推断依据（你读到了什么，促使你得出此规则）
 3. 置信度：`HIGH`（高置信度）或 `SPECULATIVE`（推测性）
@@ -365,13 +370,13 @@ def test_preview_data_implicit_permission(self, client: APIClient) -> None:
 
 在源码中发现以下模式时生成 L5 断言：
 
-| 类型 | 源码信号 | 示例断言 |
-|------|---------|---------|
-| **隐式权限** | 主逻辑前调用了 `judgeXxx()` 或 `checkXxx()` | 非管理员用户收到错误 |
-| **隐藏数量限制** | Service 中有 `if (count >= MAX_XXX)` | 无法创建超过 N 条记录 |
-| **隐式依赖** | Service 在操作前检查关联实体是否存在 | 父记录被删除后操作失败 |
-| **隐式状态约束** | 无显式注解的状态检查 | 已发布记录不能更新 |
-| **安全边界** | Service 在返回前过滤敏感数据 | 响应中永远不包含密码/令牌 |
+| 类型             | 源码信号                                    | 示例断言                  |
+| ---------------- | ------------------------------------------- | ------------------------- |
+| **隐式权限**     | 主逻辑前调用了 `judgeXxx()` 或 `checkXxx()` | 非管理员用户收到错误      |
+| **隐藏数量限制** | Service 中有 `if (count >= MAX_XXX)`        | 无法创建超过 N 条记录     |
+| **隐式依赖**     | Service 在操作前检查关联实体是否存在        | 父记录被删除后操作失败    |
+| **隐式状态约束** | 无显式注解的状态检查                        | 已发布记录不能更新        |
+| **安全边界**     | Service 在返回前过滤敏感数据                | 响应中永远不包含密码/令牌 |
 
 ### 置信度级别
 
@@ -394,13 +399,13 @@ assert resp.json()["code"] != 1  # L5[SPECULATIVE]：根据方法名推断可能
 
 ## 汇总：各层需生成的内容
 
-| 层级 | 输入 | 输出 |
-|------|------|------|
-| L1 | HAR `response.status`、`time_ms`、`Content-Type` 请求头 | `assert_protocol(response, ...)` 调用 |
-| L2 | HAR 响应体 JSON + 源码 DTO/VO | Pydantic `BaseModel` + `model_validate(response.json())` |
-| L3 | 源码枚举、`@Min`/`@Max`、字段名、分页 | `assert value in (...)`、范围检查、格式正则 |
-| L4 | 源码业务逻辑、状态机、DAO SQL | 多步 API 断言，可选 `if db:` DB 检查 |
-| L5 | 深度源码阅读、方法名、注释 | 含 `来源:行号` + 置信度注释的断言 |
+| 层级 | 输入                                                    | 输出                                                     |
+| ---- | ------------------------------------------------------- | -------------------------------------------------------- |
+| L1   | HAR `response.status`、`time_ms`、`Content-Type` 请求头 | `assert_protocol(response, ...)` 调用                    |
+| L2   | HAR 响应体 JSON + 源码 DTO/VO                           | Pydantic `BaseModel` + `model_validate(response.json())` |
+| L3   | 源码枚举、`@Min`/`@Max`、字段名、分页                   | `assert value in (...)`、范围检查、格式正则              |
+| L4   | 源码业务逻辑、状态机、DAO SQL                           | 多步 API 断言，可选 `if db:` DB 检查                     |
+| L5   | 深度源码阅读、方法名、注释                              | 含 `来源:行号` + 置信度注释的断言                        |
 
 ---
 

@@ -157,18 +157,18 @@ def detect_http_client(project_root: Path) -> dict[str, Any]:
                 break
 
         # AST 检测自定义包装类（包含 post/get/put/delete 的 request/client 类）
-        _HTTP_METHODS = frozenset({"post", "get", "put", "delete", "patch", "options", "head"})
+        _http_methods = frozenset({"post", "get", "put", "delete", "patch", "options", "head"})
         for node in ast.walk(tree):
             if (isinstance(node, ast.ClassDef)
                     and ("request" in node.name.lower() or "client" in node.name.lower())):
                 for item in ast.walk(node):
                     if (isinstance(item, ast.Call)
                             and isinstance(item.func, ast.Attribute)
-                            and item.func.attr in _HTTP_METHODS):
+                            and item.func.attr in _http_methods):
                         custom_classes.append(node.name)
                         break
                     if (isinstance(item, ast.FunctionDef)
-                            and item.name in _HTTP_METHODS):
+                            and item.name in _http_methods):
                         custom_classes.append(node.name)
                         break
 

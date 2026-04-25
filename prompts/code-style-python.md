@@ -82,6 +82,7 @@ test_{module}.py
 ```
 
 示例：
+
 - `test_datamap.py` — `/dassets/v1/datamap/` 接口的测试
 - `test_sync_task.py` — `/dmetadata/v1/syncTask/` 接口的测试
 - `test_sync_task_crud.py` — syncTask 的 CRUD 闭环测试
@@ -93,6 +94,7 @@ Test{Module}{Feature}
 ```
 
 示例：
+
 - `TestDatamapRecentQuery` — `recentQuery` 接口的测试
 - `TestDatamapAssetStatistics` — `assetStatistics` 接口的测试
 - `TestSyncTaskCRUD` — syncTask 的 CRUD 生命周期测试
@@ -104,6 +106,7 @@ test_{feature}_{scenario}
 ```
 
 示例：
+
 - `test_recent_query_with_recorded_params` — HAR 直接场景
 - `test_recent_query_missing_required_field` — 参数校验场景
 - `test_asset_statistics_returns_valid_types` — L3 枚举校验场景
@@ -118,6 +121,7 @@ test_{feature}_{scenario}
 ```
 
 示例：
+
 - `AssetStatisticsResponse`、`AssetStatisticsItem`
 - `PageTaskResponse`、`PageData`、`TaskItem`
 
@@ -212,6 +216,7 @@ assert isinstance(data["data"], list)
 ## 6. L5 — AI 推断断言要求
 
 每个 L5 断言块上方必须有如下格式的注释：
+
 1. `L5[置信度]:` 标签
 2. 相对于 `.repos/` 的源文件路径
 3. 行号
@@ -307,12 +312,12 @@ def test_update_task(self, created_task: dict) -> None:
 
 ## 9. 规模限制
 
-| 单元 | 限制 | 超出时的处理方式 |
-|------|------|---------------|
-| 文件 | 400 行 | 按接口组或场景类别拆分 |
-| 测试方法 | 50 行 | 将步骤提取为辅助方法或 fixture |
-| Fixture | 30 行 | 将初始化逻辑提取为辅助函数 |
-| 嵌套深度 | 4 层 | 用提前返回或辅助方法展平 |
+| 单元     | 限制   | 超出时的处理方式               |
+| -------- | ------ | ------------------------------ |
+| 文件     | 400 行 | 按接口组或场景类别拆分         |
+| 测试方法 | 50 行  | 将步骤提取为辅助方法或 fixture |
+| Fixture  | 30 行  | 将初始化逻辑提取为辅助函数     |
+| 嵌套深度 | 4 层   | 用提前返回或辅助方法展平       |
 
 **文件超过 400 行时的拆分方式**：
 
