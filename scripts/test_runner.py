@@ -1,6 +1,7 @@
 """Pytest 执行包装器，含结果解析功能。"""
 import re
 import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -28,7 +29,7 @@ def build_pytest_command(
     elif runner == "poetry":
         cmd = ["poetry", "run", "pytest"]
     elif runner == "direct":
-        cmd = ["python", "-m", "pytest"]
+        cmd = [sys.executable, "-m", "pytest"]
     else:  # pip or fallback
         cmd = ["pytest"]
 

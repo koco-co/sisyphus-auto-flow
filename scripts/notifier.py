@@ -1,6 +1,7 @@
 """DingTalk、飞书和 Slack 的 Webhook 通知器。"""
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 
 import httpx
@@ -100,7 +101,7 @@ def format_slack(payload: NotificationPayload) -> dict:
 # 格式化器注册表
 # ---------------------------------------------------------------------------
 
-FORMATTERS: dict[str, object] = {
+FORMATTERS: dict[str, Callable[[NotificationPayload], dict]] = {
     "dingtalk": format_dingtalk,
     "feishu": format_feishu,
     "slack": format_slack,

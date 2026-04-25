@@ -11,6 +11,7 @@ from scripts.har_parser import (
     HarRequest,
     HarResponse,
     ParsedResult,
+    RepoProfilesConfig,
     dedup_entries,
     filter_entries,
     match_repo,
@@ -247,7 +248,8 @@ class TestMatchRepo:
         import yaml
 
         profiles_data = yaml.safe_load(sample_repo_profiles_path.read_text())
-        profiles = profiles_data["profiles"]
+        validated = RepoProfilesConfig.model_validate(profiles_data)
+        profiles = validated.profiles
 
         name, branch = match_repo("/dassets/v1/datamap/recentQuery", profiles)
         assert name == "dt-center-assets"
@@ -257,7 +259,8 @@ class TestMatchRepo:
         import yaml
 
         profiles_data = yaml.safe_load(sample_repo_profiles_path.read_text())
-        profiles = profiles_data["profiles"]
+        validated = RepoProfilesConfig.model_validate(profiles_data)
+        profiles = validated.profiles
 
         name, branch = match_repo("/dmetadata/v1/syncTask/pageTask", profiles)
         assert name == "dt-center-metadata"
@@ -269,7 +272,8 @@ class TestMatchRepo:
         import yaml
 
         profiles_data = yaml.safe_load(sample_repo_profiles_path.read_text())
-        profiles = profiles_data["profiles"]
+        validated = RepoProfilesConfig.model_validate(profiles_data)
+        profiles = validated.profiles
 
         name, branch = match_repo("/unknown/v1/something", profiles)
         assert name is None

@@ -165,6 +165,19 @@ def _write_if_not_exists(path: Path, content: str) -> bool:
     return True
 
 
+def _render_autoflow_config(
+    root: Path, env: Environment, config_vars: dict, created: list[str]
+) -> None:
+    """渲染 autoflow-config.yaml，若模板存在且文件不存在则创建。"""
+    template_path = TEMPLATES_DIR / "autoflow-config.yaml.j2"
+    if not template_path.exists():
+        warnings.warn(f"Template not found: {template_path}", stacklevel=2)
+        return
+    content = env.get_template("autoflow-config.yaml.j2").render(**config_vars)
+    if _write_if_not_exists(root / "autoflow-config.yaml", content):
+        created.append("autoflow-config.yaml")
+
+
 def append_to_existing_project(config: ScaffoldConfig) -> list[str]:
     """为已有项目追加 AutoFlow 必需文件，不覆盖现有结构。"""
     root = config.project_root
@@ -193,13 +206,7 @@ def append_to_existing_project(config: ScaffoldConfig) -> list[str]:
     # 3. autoflow-config.yaml（若有配置变量）
     if config.config_vars:
         config_env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)), keep_trailing_newline=True)
-        autoflow_config_template = TEMPLATES_DIR / "autoflow-config.yaml.j2"
-        if autoflow_config_template.exists():
-            config_content = config_env.get_template("autoflow-config.yaml.j2").render(**config.config_vars)
-            if _write_if_not_exists(root / "autoflow-config.yaml", config_content):
-                created.append("autoflow-config.yaml")
-        else:
-            warnings.warn(f"Template not found: {autoflow_config_template}", stacklevel=2)
+        _render_autoflow_config(root, config_env, config.config_vars, created)
 
     return created
 
@@ -284,13 +291,7 @@ def generate_project(config: ScaffoldConfig) -> list[str]:
 
     # 10. autoflow-config.yaml（若有配置变量）
     if config.config_vars:
-        autoflow_config_template = TEMPLATES_DIR / "autoflow-config.yaml.j2"
-        if autoflow_config_template.exists():
-            config_content = env.get_template("autoflow-config.yaml.j2").render(**config.config_vars)
-            if _write_if_not_exists(root / "autoflow-config.yaml", config_content):
-                created.append("autoflow-config.yaml")
-        else:
-            warnings.warn(f"Template not found: {autoflow_config_template}", stacklevel=2)
+        _render_autoflow_config(root, env, config.config_vars, created)
 
     return created
 

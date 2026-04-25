@@ -252,13 +252,13 @@ def dedup_entries(entries: list[HarEntry]) -> list[HarEntry]:
 
 
 def match_repo(
-    path: str, profiles: list[dict]
+    path: str, profiles: list[RepoProfile]
 ) -> tuple[str | None, str | None]:
     """将 *path* 与 profiles 中的 url_prefixes 进行匹配；返回 (name, branch) 或 (None, None)。"""
     for profile in profiles:
-        for prefix in profile.get("url_prefixes", []):
+        for prefix in profile.url_prefixes:
             if path.startswith(prefix):
-                return profile["name"], profile["branch"]
+                return profile.name, profile.branch
     return None, None
 
 
@@ -271,10 +271,21 @@ def _extract_service_module(path: str) -> tuple[str, str]:
     """从 URL 路径部分推导出 (service, module)。
 
     示例：/dassets/v1/datamap/recentQuery → service=dassets, module=datamap
+           /api/v1/users                  → service=api, module=users
+           /health                        → service=health, module=health
     """
+    import re
     parts = [p for p in path.split("/") if p]
-    service = parts[0] if len(parts) > 0 else ""
-    module = parts[2] if len(parts) > 2 else (parts[1] if len(parts) > 1 else "")
+    if not parts:
+        return "", ""
+    service = parts[0]
+    # 从右向左找模块名：跳过常见版本号段
+    module = service
+    for p in reversed(parts[1:]):
+        if re.match(r"^v\d+", p):
+            continue
+        module = p
+        break
     return service, module
 
 
@@ -319,14 +330,14 @@ def parse_har(
     total_raw = len(entries)
 
     # --- 加载 profiles ---
-    profiles: list[dict] = []
+    profiles: list[RepoProfile] = []
     if profiles_path is not None:
         try:
             profiles_data = yaml.safe_load(profiles_path.read_text())
             if profiles_data is None:
                 profiles_data = {}
             validated = RepoProfilesConfig.model_validate(profiles_data)
-            profiles = [p.model_dump() for p in validated.profiles]
+            profiles = validated.profiles
         except Exception as exc:
             import sys
             print(f"[har-parser] Warning: failed to parse profiles: {exc}", file=sys.stderr)

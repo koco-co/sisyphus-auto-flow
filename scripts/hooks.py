@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass, field
 from enum import StrEnum
 
@@ -87,7 +88,6 @@ def load_hooks_from_config(config_path: str) -> HookRegistry:
             try:
                 point = HookPoint(point_str)
             except ValueError:
-                import sys
                 print(
                     f"[hooks] Warning: unknown hook point '{point_str}', skipping",
                     file=sys.stderr,
@@ -103,7 +103,6 @@ def load_hooks_from_config(config_path: str) -> HookRegistry:
             )
             registry.register(registration)
     except Exception as exc:
-        import sys
         print(f"[hooks] Warning: failed to load hooks config: {exc}", file=sys.stderr)
 
     return registry
