@@ -214,3 +214,18 @@ if __name__ == "__main__":
         result = detect_test_runner(tmp_path)
         assert result["type"] == "custom"
         assert result["entry"] == "runner.py"
+
+    def test_detect_workers_extraction(self, tmp_path: Path) -> None:
+        """测试从 runner 中提取 workers 数量。"""
+        runner = tmp_path / "run_demo.py"
+        runner.write_text('''
+import pytest
+if __name__ == "__main__":
+    pytest.main(["-n", "auto", "--reruns=1"])
+class Run:
+    def run_batch_scenariotest(self):
+        runner.run_with_option(workers=8, test_path="...")
+''')
+        result = detect_test_runner(tmp_path)
+        assert result["options"]["parallel"] is True
+        assert result["options"]["workers"] == 8

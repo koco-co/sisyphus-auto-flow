@@ -554,7 +554,7 @@ def detect_env_management(project_root: Path) -> dict[str, Any]:
 
 
 def detect_test_runner(project_root: Path) -> dict[str, Any]:
-    """检测自定义测试运行器（run_demo.py、Makefile 等）。"""
+    """检测自定义测试运行器（run_demo.py / run.py / runner.py / run_tests.py）。"""
     runner_files = ["run_demo.py", "run.py", "runner.py", "run_tests.py"]
     detected_runner = None
     for rf in runner_files:
@@ -569,7 +569,7 @@ def detect_test_runner(project_root: Path) -> dict[str, Any]:
     text = (project_root / detected_runner).read_text(errors="ignore")
     options: dict[str, Any] = {"parallel": False, "reruns": 0}
 
-    if re.search(r'-n["\s]', text) or "xdist" in text:
+    if re.search(r'-n(?:"|\s|\d+|auto)', text) or "xdist" in text:
         options["parallel"] = True
         m = re.search(r"workers=(\d+)", text)
         if m:
