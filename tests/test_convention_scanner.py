@@ -101,7 +101,7 @@ class TestDetectAssertionStyle:
             "    resp = {'code': 1}\n"
             "    assert resp.get('code') == 1\n"
         )
-        result = detect_assertion_style(tmp_path)
+        result = detect_assertion_style(tmp_path, project_root=tmp_path)
         assert result["style"] == "dict_get"
 
     def test_detects_bracket(self, tmp_path: Path) -> None:
@@ -111,11 +111,11 @@ class TestDetectAssertionStyle:
             "    resp = {'code': 0}\n"
             "    assert resp['code'] == 0\n"
         )
-        result = detect_assertion_style(tmp_path)
+        result = detect_assertion_style(tmp_path, project_root=tmp_path)
         assert result["style"] == "bracket"
 
     def test_empty_dir_returns_unknown(self, tmp_path: Path) -> None:
-        result = detect_assertion_style(tmp_path)
+        result = detect_assertion_style(tmp_path, project_root=tmp_path)
         assert result["style"] == "unknown"
 
     def test_status_only(self, tmp_path: Path) -> None:
@@ -125,5 +125,5 @@ class TestDetectAssertionStyle:
             "    resp = mock_response()\n"
             "    assert resp.status_code == 200\n"
         )
-        result = detect_assertion_style(tmp_path)
+        result = detect_assertion_style(tmp_path, project_root=tmp_path)
         assert result["style"] == "status_only"

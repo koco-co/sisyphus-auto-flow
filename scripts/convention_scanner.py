@@ -227,23 +227,34 @@ def detect_http_client(project_root: Path) -> dict[str, Any]:
     return result
 
 
-def _detect_assertion_helpers(test_dir: Path) -> list[str]:
-    """扫描测试目录中定义的辅助断言方法（如 assert_response_success）。"""
+def _detect_assertion_helpers(test_dir: Path, project_root: Path) -> list[str]:
+    """扫描项目中的辅助断言方法（如 assert_response_success）。"""
     helpers: list[str] = []
-    for py_file in list(test_dir.rglob("*.py"))[:20]:
-        if ".venv" in str(py_file) or "__pycache__" in str(py_file):
-            continue
-        try:
-            text = py_file.read_text(errors="ignore")
-        except (OSError, UnicodeDecodeError):
-            continue
-        for match in re.finditer(r"def (assert_\w+)\(self", text):
-            if match.group(1) not in helpers:
-                helpers.append(match.group(1))
+    scan_dirs: list[Path] = [test_dir]
+
+    # Also scan utils/ and conftest.py at project root
+    utils_dir = project_root / "utils"
+    if utils_dir.is_dir():
+        scan_dirs.append(utils_dir)
+    root_conftest = project_root / "conftest.py"
+    if root_conftest.exists():
+        scan_dirs.append(project_root)  # scan root for conftest.py
+
+    for scan_dir in scan_dirs:
+        for py_file in list(scan_dir.rglob("*.py"))[:100]:
+            if ".venv" in str(py_file) or "__pycache__" in str(py_file):
+                continue
+            try:
+                text = py_file.read_text(errors="ignore")
+            except (OSError, UnicodeDecodeError):
+                continue
+            for match in re.finditer(r"def (assert_\w+)\(self", text):
+                if match.group(1) not in helpers:
+                    helpers.append(match.group(1))
     return helpers
 
 
-def detect_assertion_style(test_dir: Path) -> dict[str, Any]:
+def detect_assertion_style(test_dir: Path, project_root: Path) -> dict[str, Any]:
     """检测断言风格：dict_get / bracket / attr / status_only / code_success。
 
     扫描测试文件中的 assert 语句，统计各类断言的占比。
@@ -283,7 +294,7 @@ def detect_assertion_style(test_dir: Path) -> dict[str, Any]:
     return {
         "style": dominant,
         "common_checks": samples,
-        "helper_methods": _detect_assertion_helpers(test_dir),
+        "helper_methods": _detect_assertion_helpers(test_dir, project_root),
     }
 
 
@@ -432,7 +443,7 @@ def scan_project(project_root: Path) -> dict[str, Any]:
         "scanned_at": datetime.now(UTC).isoformat(),
         "api": detect_api_pattern(project_root),
         "http_client": detect_http_client(project_root),
-        "assertion": detect_assertion_style(test_dir),
+        "assertion": detect_assertion_style(test_dir, project_root),
         "allure": detect_allure_pattern(project_root),
         "service_layer": detect_service_layer(project_root),
         "auth": detect_auth_method(project_root),
