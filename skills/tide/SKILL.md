@@ -8,6 +8,15 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Agent, AskUserQuestion, Task
 
 # Tide：HAR 转 Pytest 测试生成
 
+## 第零步：自更新
+
+在开始之前检查 Tide 插件是否有更新。
+
+```bash
+# 检查并自动更新插件（无网络时静默跳过）
+bash "${CLAUDE_SKILL_DIR}/../../scripts/self-update.sh"
+```
+
 ## 任务初始化
 
 在流程开始时创建 6 个任务：
