@@ -207,6 +207,20 @@ git diff --name-only <last_commit>..HEAD
   推断行业：    数据中台
 ```
 
+## 阶段五：规范指纹生成
+
+读取 `.autoflow/convention-scout.json`（由 convention_scanner.py 生成）。
+
+- 若 scout 文件存在：基于 scout 中的检测结果，补全 `convention-fingerprint.yaml`
+  - 补充 api.modules 中的详细模块信息
+  - 验证 scout 的检测结论是否准确
+  - 补充 autoflow-config.yaml 的 code_style 段
+- 若 scout 文件不存在：自行分析项目规范，输出 convention-fingerprint.yaml
+
+写入 `.autoflow/convention-fingerprint.yaml`，格式参见 prompts/code-style-python.md。
+
+同时更新 `autoflow-config.yaml` 的 `project.code_style` 段，写入 key 字段供下游 Agent 使用。
+
 ## 错误处理
 
 - 若测试目录完全不存在，输出空的 project-profile.json 并标记 `scan_mode: "empty"`。
