@@ -30,8 +30,16 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Agent, AskUserQuestion, Task
 4. **环境检查**：`test -f repo-profiles.yaml`，若缺失则打印带修复命令的错误信息并终止
 5. **读取配置**：读取 `repo-profiles.yaml` 和 `autoflow-config.yaml`，提取 repos、test_dir、test_types、industry 等
 6. **无源码降级**：repos 为空时设置 `no_source_mode=true`
-7. **恢复检查**：若 `state.json` 存在且未设置 `--resume`，询问继续/重来/查看摘要
-8. **HAR 校验**：`uv run python3 -c "from scripts.har_parser import validate_har; from pathlib import Path; r = validate_har(Path('${har_path}')); print(r)"`
+7. **惯例指纹加载**：
+   test -f .autoflow/convention-fingerprint.yaml && echo "FINGERPRINT_EXISTS" || echo "NO_FINGERPRINT"
+   若 fingerprint 存在：
+   - 读取 .autoflow/convention-fingerprint.yaml
+   - 将 fingerprint 内容注入后续 wave 的 case-writer prompt 的"项目规范"约束段
+   - 设置 fingerprint_mode=true
+   若不存在：
+   - 设置 fingerprint_mode=false，使用通用默认模板
+8. **恢复检查**：若 `state.json` 存在且未设置 `--resume`，询问继续/重来/查看摘要
+9. **HAR 校验**：`uv run python3 -c "from scripts.har_parser import validate_har; from pathlib import Path; r = validate_har(Path('${har_path}')); print(r)"`
 9. **认证头扫描**：`uv run python3 -c "from scripts.har_parser import scan_auth_headers; from pathlib import Path; print(scan_auth_headers(Path('${har_path}')))"`
 10. **隐私提示**：输出 HAR 数据发送至 AI 模型的提示，请用户确认后继续
 11. **参数摘要**：打印 HAR 路径/记录数/认证方式/测试目录/源码模式/模式

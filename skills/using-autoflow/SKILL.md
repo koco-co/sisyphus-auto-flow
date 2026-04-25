@@ -49,6 +49,9 @@ Task 2 → in_progress
 
 1. 读取 `agents/project-scanner.md` 作为 prompt，启动 project-scanner Agent（opus）
 2. 读取 .autoflow/project-profile.json
+3. **规范指纹生成**：运行 convention_scanner.py 生成惯例指纹
+   uv run python3 ${CLAUDE_SKILL_DIR}/../../scripts/convention_scanner.py --project-root .
+4. **读取指纹**：读取 .autoflow/convention-scout.json，等待 project-scanner 将其转换为 convention-fingerprint.yaml
 
 Task 2 完成。Task 3 → in_progress
 

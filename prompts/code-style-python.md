@@ -469,3 +469,24 @@ def test_query_success(self, client, db):
 - [ ] 文件不超过 400 行
 - [ ] 所有测试方法不超过 50 行
 - [ ] 所有函数有类型注解
+
+---
+
+## 14. 惯例指纹适配（convention fingerprint）
+
+当项目存在 `.autoflow/convention-fingerprint.yaml` 时，case-writer 必须遵循以下映射：
+
+| fingerprint 字段 | 生成代码约束 |
+|---|---|
+| api.pattern.type=enum | URL 必须通过 {class}.{member}.value 引用，不得硬编码 |
+| api.pattern.type=inline | URL 可以硬编码为字符串 |
+| http_client.custom_class | HTTP 调用使用该类的 post/get 方法 |
+| assertion.style=dict_get | 断言使用 `.get('key')` 方式访问响应字段 |
+| assertion.style=bracket | 断言使用 `['key']` 方式访问响应字段 |
+| allure.enabled=true | 类级 @allure.epic 和方法级 @allure.title 必加 |
+| allure.step_pattern=context | 关键步骤使用 `with allure.step("描述"):` 包裹 |
+| test_data.pattern=separated | 测试数据从 testdata/ 模块导入 |
+| service_layer.detected=true | 生成的测试直接调用 HTTP，不依赖现有 Service 层 |
+| auth.method=cookie | 测试使用 cookie 认证（通过 BaseCookies 或 fixture） |
+
+若 fingerprint 不存在，使用 case-writer 的默认通用代码风格。
