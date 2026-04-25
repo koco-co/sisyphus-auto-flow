@@ -127,3 +127,12 @@ class TestDetectAssertionStyle:
         )
         result = detect_assertion_style(tmp_path, project_root=tmp_path)
         assert result["style"] == "status_only"
+
+    def test_detects_code_success(self, tmp_path: Path) -> None:
+        test_file = tmp_path / "test_code.py"
+        test_file.write_text(
+            "def test():\n"
+            '    assert resp["code"] == 1\n'
+        )
+        result = detect_assertion_style(tmp_path, project_root=tmp_path)
+        assert result["has_code_success"] is True

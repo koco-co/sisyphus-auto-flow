@@ -238,7 +238,13 @@ def _detect_assertion_helpers(test_dir: Path, project_root: Path) -> list[str]:
         scan_dirs.append(utils_dir)
     root_conftest = project_root / "conftest.py"
     if root_conftest.exists():
-        scan_dirs.append(project_root)  # scan root for conftest.py
+        try:
+            text = root_conftest.read_text(errors="ignore")
+            for match in re.finditer(r"def (assert_\w+)\(self", text):
+                if match.group(1) not in helpers:
+                    helpers.append(match.group(1))
+        except (OSError, UnicodeDecodeError):
+            pass
 
     for scan_dir in scan_dirs:
         for py_file in list(scan_dir.rglob("*.py"))[:100]:
@@ -259,7 +265,8 @@ def detect_assertion_style(test_dir: Path, project_root: Path) -> dict[str, Any]
 
     扫描测试文件中的 assert 语句，统计各类断言的占比。
     """
-    counts: dict[str, int] = {"dict_get": 0, "bracket": 0, "attr": 0, "status_only": 0, "code_success": 0, "total": 0}
+    counts: dict[str, int] = {"dict_get": 0, "bracket": 0, "attr": 0, "status_only": 0, "total": 0}
+    code_success_count = 0
     samples: list[str] = []
 
     test_files = list(test_dir.rglob("test_*.py")) + list(test_dir.rglob("*_test.py"))
@@ -281,9 +288,9 @@ def detect_assertion_style(test_dir: Path, project_root: Path) -> dict[str, Any]
                 elif ".get(" not in source and "[" not in source:
                     counts["attr"] += 1
                 if isinstance(node.test, ast.Compare):
-                    source = ast.unparse(node.test)
-                    if '"code"' in source or "'code'" in source:
-                        counts["code_success"] = counts.get("code_success", 0) + 1
+                    cmp_source = ast.unparse(node.test)
+                    if '"code"' in cmp_source or "'code'" in cmp_source:
+                        code_success_count += 1
                 if len(samples) < 3 and counts["total"] <= 5 and isinstance(node.test, ast.Compare):
                     samples.append(ast.unparse(node.test))
 
@@ -293,6 +300,7 @@ def detect_assertion_style(test_dir: Path, project_root: Path) -> dict[str, Any]
     dominant = max(counts, key=lambda k: counts[k] if k != "total" else 0)
     return {
         "style": dominant,
+        "has_code_success": code_success_count > 0,
         "common_checks": samples,
         "helper_methods": _detect_assertion_helpers(test_dir, project_root),
     }
