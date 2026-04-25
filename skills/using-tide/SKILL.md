@@ -52,12 +52,36 @@ Task 2 → in_progress
 3. **规范指纹生成**：运行 convention_scanner.py 生成惯例指纹
    uv run python3 ${CLAUDE_SKILL_DIR}/../../scripts/convention_scanner.py --project-root .
 4. **读取指纹**：读取 .tide/convention-scout.json，等待 project-scanner 将其转换为 convention-fingerprint.yaml
+5. **复杂度评估**：
+   - 读取 .tide/convention-scout.json 输出，评估：
+     - 模块数 > 3 → complexity = complex
+     - 有 config/env/*.ini → complexity = complex
+     - 有 run_demo.py → complexity = moderate
+     - 否则 → complexity = simple
+   - 将 complexity 存入上下文（供后续步骤使用）
 
 Task 2 完成。Task 3 → in_progress
 
 ### 7 维度确认
 
 逐项展示 project-profile.json 的 7 个维度（架构/代码风格/鉴权/工具链/Allure/数据管理/行业），每个维度用户确认或修正。修正结果写入 `_confirmed_profile`。
+
+### 新维度确认
+
+8. **多环境检测确认**（仅 complexity=moderate/complex）：
+   - 展示检测到的环境列表
+   - 询问：是否配置多环境？当前默认环境是哪个？
+   - 若确认，写入 environments 节到 tide-config.yaml
+
+9. **测试运行器检测**（仅 complexity=complex）：
+   - 若检测到 run_demo.py 等自定义 runner：
+     - 展示检测到的运行参数（并行数、重试次数）
+     - 展示模块级运行入口
+     - 确认写入 tide-config.yaml
+
+10. **认证流程确认**（如有认证类）：
+    - 展示检测到的认证方式 + 认证类 + 步骤链
+    - 确认凭证来源
 
 Task 3 完成。跳转至第三步。
 
@@ -117,6 +141,12 @@ Task 6 → in_progress
 1. 渲染 tide-config.yaml（Jinja2）
 2. 运行 scaffold.py（--mode new/existing）
 3. 生成 CLAUDE.md（包含 7 维度摘要或技术栈 + 行业上下文）
-4. smoke test：URL 可达性 + 认证有效性 + 数据库连接（若配置）
+4. smoke test：
+   - URL 可达性 + 认证有效性 + 数据库连接（若配置）
+   - 若 tide-config.yaml 中存在 test_runner.type == custom：
+     - 展示：`python {{ test_runner.entry }}` 运行全部测试
+     - 展示：`python {{ test_runner.entry }} --module <name>` 运行特定模块
+   - 若没有自定义 runner：
+     - 现有 pytest 命令逻辑
 
 打印初始化摘要，Task 6 完成。
