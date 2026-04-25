@@ -7,6 +7,7 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -226,12 +227,28 @@ def detect_http_client(project_root: Path) -> dict[str, Any]:
     return result
 
 
+def _detect_assertion_helpers(test_dir: Path) -> list[str]:
+    """扫描测试目录中定义的辅助断言方法（如 assert_response_success）。"""
+    helpers: list[str] = []
+    for py_file in list(test_dir.rglob("*.py"))[:20]:
+        if ".venv" in str(py_file) or "__pycache__" in str(py_file):
+            continue
+        try:
+            text = py_file.read_text(errors="ignore")
+        except (OSError, UnicodeDecodeError):
+            continue
+        for match in re.finditer(r"def (assert_\w+)\(self", text):
+            if match.group(1) not in helpers:
+                helpers.append(match.group(1))
+    return helpers
+
+
 def detect_assertion_style(test_dir: Path) -> dict[str, Any]:
-    """检测断言风格：dict_get / bracket / attr / status_only。
+    """检测断言风格：dict_get / bracket / attr / status_only / code_success。
 
     扫描测试文件中的 assert 语句，统计各类断言的占比。
     """
-    counts: dict[str, int] = {"dict_get": 0, "bracket": 0, "attr": 0, "status_only": 0, "total": 0}
+    counts: dict[str, int] = {"dict_get": 0, "bracket": 0, "attr": 0, "status_only": 0, "code_success": 0, "total": 0}
     samples: list[str] = []
 
     test_files = list(test_dir.rglob("test_*.py")) + list(test_dir.rglob("*_test.py"))
@@ -252,6 +269,10 @@ def detect_assertion_style(test_dir: Path) -> dict[str, Any]:
                     counts["status_only"] += 1
                 elif ".get(" not in source and "[" not in source:
                     counts["attr"] += 1
+                if isinstance(node.test, ast.Compare):
+                    source = ast.unparse(node.test)
+                    if '"code"' in source or "'code'" in source:
+                        counts["code_success"] = counts.get("code_success", 0) + 1
                 if len(samples) < 3 and counts["total"] <= 5 and isinstance(node.test, ast.Compare):
                     samples.append(ast.unparse(node.test))
 
@@ -262,6 +283,7 @@ def detect_assertion_style(test_dir: Path) -> dict[str, Any]:
     return {
         "style": dominant,
         "common_checks": samples,
+        "helper_methods": _detect_assertion_helpers(test_dir),
     }
 
 
