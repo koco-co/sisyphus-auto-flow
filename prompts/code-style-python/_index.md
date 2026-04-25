@@ -17,3 +17,6 @@
 | fingerprint.assertion.style in ("status_only", null) | `30-assert-status-only.md` |
 | fingerprint.test_style.file_suffix == "*_test.py" | `40-test-structure-dtstack.md` |
 | 以上都不匹配 | `40-test-structure-standard.md` |
+| fingerprint.env_management.detected == true | `50-env-config.md` |
+| fingerprint.test_runner.type == "custom" | `55-runner-custom.md` |
+| fingerprint.auth.flow 包含多步 | `60-auth-flow-detailed.md` |
