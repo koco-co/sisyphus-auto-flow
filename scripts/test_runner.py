@@ -16,6 +16,22 @@ class TestResult:
     output: str = ""
 
 
+def detect_runner(project_root: Path | None = None) -> str:
+    """检测项目使用的包管理器，返回 'uv' | 'poetry' | 'pip' | 'direct'。
+
+    用于 SKILL 预检阶段，替代内联检测代码。
+    """
+    root = project_root or Path.cwd()
+
+    if (root / "uv.lock").exists():
+        return "uv"
+    if (root / "poetry.lock").exists():
+        return "poetry"
+    if (root / "requirements.txt").exists():
+        return "pip"
+    return "direct"
+
+
 def build_pytest_command(
     test_path: Path,
     collect_only: bool = False,

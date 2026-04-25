@@ -247,6 +247,52 @@ def dedup_entries(entries: list[HarEntry]) -> list[HarEntry]:
 
 
 # ---------------------------------------------------------------------------
+# 预检函数（供 SKILL 调用，替代内联代码）
+# ---------------------------------------------------------------------------
+
+
+def validate_har(har_path: Path) -> tuple[bool, str, int]:
+    """验证 HAR 文件是否合法，返回 (is_valid, message, entry_count)。
+
+    用于 SKILL 预检阶段，替代内联 python3 -c 代码。
+    """
+    try:
+        raw = json.loads(har_path.read_text())
+    except (json.JSONDecodeError, OSError) as exc:
+        return False, f"Invalid HAR: {exc}", 0
+
+    if "log" not in raw or "entries" not in raw.get("log", {}):
+        return False, "Invalid HAR: missing log.entries", 0
+
+    entries = raw["log"]["entries"]
+    return True, f"entries: {len(entries)}", len(entries)
+
+
+def scan_auth_headers(har_path: Path) -> dict[str, int]:
+    """扫描 HAR 中的认证头分布，返回 {auth_type: count}。
+
+    用于 SKILL 预检阶段，替代内联 python3 -c 代码。
+    """
+    import collections
+
+    raw = json.loads(har_path.read_text())
+    entries = raw.get("log", {}).get("entries", [])
+    auth_stats: dict[str, int] = collections.Counter()
+
+    for entry in entries:
+        headers = {h["name"].lower(): h["value"] for h in entry.get("request", {}).get("headers", [])}
+        if "cookie" in headers:
+            auth_stats["cookie"] += 1
+        elif "authorization" in headers:
+            auth_type = headers["authorization"].split()[0]
+            auth_stats[f"token({auth_type})"] += 1
+        else:
+            auth_stats["none"] += 1
+
+    return dict(auth_stats)
+
+
+# ---------------------------------------------------------------------------
 # match_repo
 # ---------------------------------------------------------------------------
 
