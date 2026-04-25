@@ -48,7 +48,7 @@ allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Agent, AskUserQuestion, Task
    - 若 http_client.client_pattern == "custom_class" → +20-client-custom.md
    - 若 http_client.library == "httpx" → +20-client-httpx.md
    - 若 http_client.library == "requests" → +20-client-requests.md
-   - 若 assertion.style == "code_success" → +30-assert-code-success.md
+   - 若 assertion.has_code_success == true → +30-assert-code-success.md
    - 若 assertion.style 为 status_only 或不存在 → +30-assert-status-only.md
    - 若 test_style.file_suffix == "*_test.py" → +40-test-structure-dtstack.md
    - 以上都不匹配 → +40-test-structure-standard.md

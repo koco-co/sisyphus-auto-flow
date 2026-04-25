@@ -18,7 +18,7 @@ model: sonnet
 - `.tide/scenarios.json` — 完整场景详情与断言计划
 - 每个已分配场景的 `source_evidence` 所引用的源代码文件
 - `prompts/assertion-layers.md` — 层级定义与断言模式
-- `prompts/code-style-python.md` — 强制性代码风格与结构规范
+- `prompts/code-style-python/00-core.md`（以及根据 convention-fingerprint.yaml 条件加载的其他模块）— 强制性代码风格与结构规范
 - `tests/conftest.py` — 可用的 fixture（不得重新定义，直接使用）
 
 ## 已有项目适配
@@ -140,7 +140,7 @@ assert notification_queue.count() == 1
 
 ## 代码质量规范
 
-严格遵守 `prompts/code-style-python.md`。不可妥协的约束：
+严格遵守 `prompts/code-style-python/00-core.md`（以及根据 convention-fingerprint.yaml 条件加载的其他模块）。不可妥协的约束：
 
 - **无硬编码值**：测试数据使用 fixture、常量或工厂函数
 - **不可变性**：绝不对传入的参数变量重新赋值，始终构建新对象

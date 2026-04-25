@@ -217,7 +217,7 @@ git diff --name-only <last_commit>..HEAD
   - 补充 tide-config.yaml 的 code_style 段
 - 若 scout 文件不存在：自行分析项目规范，输出 convention-fingerprint.yaml
 
-写入 `.tide/convention-fingerprint.yaml`，格式参见 prompts/code-style-python.md。
+写入 `.tide/convention-fingerprint.yaml`，格式参见 `prompts/code-style-python/00-core.md`。
 
 同时更新 `tide-config.yaml` 的 `project.code_style` 段，写入 key 字段供下游 Agent 使用。
 
