@@ -22,6 +22,19 @@ typecheck:
 
 ci: lint typecheck test
 
+PLUGIN_DIR := $(shell python3 -c "import json; d=json.load(open('$(HOME)/.claude/plugins/installed_plugins.json')); [print(e['installPath']) for v in d.get('plugins',{}).values() for e in v if 'tide' in e.get('installPath','')]" 2>/dev/null)
+
+install-plugin:
+	@if [ -z "$(PLUGIN_DIR)" ]; then \
+		echo "错误: 未找到 Tide 插件安装目录"; exit 1; fi
+	@echo "同步到 $(PLUGIN_DIR)..."
+	@rsync -av --exclude=".venv" --exclude=".git" --exclude=".worktrees" \
+	  --exclude=".tide" --exclude="__pycache__" --exclude="*.pyc" \
+	  --exclude=".pytest_cache" --exclude=".DS_Store" \
+	  . "$(PLUGIN_DIR)/" 2>&1 | tail -5
+	@python3 -c "import json,subprocess;d=json.load(open('$(HOME)/.claude/plugins/installed_plugins.json'));sha=subprocess.run(['git','rev-parse','HEAD'],capture_output=True,text=True).stdout.strip();all(e.update({'lastUpdated':'$(shell date -u +%Y-%m-%dT%H:%M:%S.000Z)','gitCommitSha':sha}) for v in d.get('plugins',{}).values() for e in v if 'tide' in e.get('installPath',''));json.dump(d,open('$(HOME)/.claude/plugins/installed_plugins.json','w'),indent=2)"
+	@echo "Tide 插件已更新 ✅"
+
 release:
 	@echo "=== 发布流程 ==="
 	@echo "1. 确认 pyproject.toml 版本号已更新"
