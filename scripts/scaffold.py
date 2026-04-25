@@ -107,7 +107,6 @@ __pycache__/
 *.py[cod]
 .venv/
 .tide/
-.repos/
 .trash/
 .env
 htmlcov/
@@ -189,7 +188,7 @@ def append_to_existing_project(config: ScaffoldConfig) -> list[str]:
 
     # 2. 追加 .gitignore 条目（不覆盖）
     gitignore_path = root / ".gitignore"
-    tide_entries = [".tide/", ".repos/", ".trash/"]
+    tide_entries = [".tide/", ".trash/"]
     if gitignore_path.exists():
         existing = gitignore_path.read_text()
         new_entries = [e for e in tide_entries if e not in existing]

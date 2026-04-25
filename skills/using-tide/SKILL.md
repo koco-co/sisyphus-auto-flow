@@ -125,15 +125,15 @@ Task 3 完成。
 
 Task 4 → in_progress
 
-1. **检查已有仓库**：`ls -d .repos/*/ 2>/dev/null`，若已有仓库：
+1. **检查已有仓库**：`ls -d .tide/repos/*/ 2>/dev/null`，若已有仓库：
    - 读取每个仓库的 `git remote get-url origin` 和当前分支
    - 展示给用户确认（使用 AskUserQuestion）
    - 用户确认或修正后写入 repo-profiles.yaml
-2. **首次配置**（无 .repos 时）：
+2. **首次配置**（无 .tide/repos 时）：
    - 读取 CLAUDE.md 中的 `### Source Repositories` 节，提取仓库名称和分支
    - 根据仓库名推断 Git 地址（约定：CLAUDE.md 已有项目名称则自动拼接）
    - 展示给用户确认
-   - git clone 各仓库到 .repos/ 下
+   - git clone 各仓库到 .tide/repos/ 下
 3. 配置 URL 前缀映射关系
 4. 写入 repo-profiles.yaml
 

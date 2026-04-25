@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 
 TIDE_DIR = ".tide"
-REPOS_DIR = ".repos"
+REPOS_DIR = ".tide/repos"
 TRASH_DIR = ".trash"
 
 
@@ -28,7 +28,7 @@ def ensure_tide_dirs(project_root: Path) -> Path:
 
 
 def ensure_repos_dir(project_root: Path) -> Path:
-    """确保 .repos/ 目录存在并返回其路径。"""
+    """确保 .tide/repos/ 目录存在并返回其路径。"""
     repos_dir = project_root / REPOS_DIR
     repos_dir.mkdir(parents=True, exist_ok=True)
     return repos_dir
