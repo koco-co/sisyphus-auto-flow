@@ -106,3 +106,47 @@ def load_hooks_from_config(config_path: str) -> HookRegistry:
         print(f"[hooks] Warning: failed to load hooks config: {exc}", file=sys.stderr)
 
     return registry
+
+
+def run_hook(point_str: str, project_root: str = ".") -> None:
+    """根据 YAML 配置执行指定 hook point 的所有注册命令。"""
+    import subprocess
+    from pathlib import Path
+
+    config_path = Path(project_root) / "autoflow-config.yaml"
+    registry = load_hooks_from_config(str(config_path))
+
+    try:
+        point = HookPoint(point_str)
+    except ValueError:
+        print(f"[hooks] Unknown hook point: {point_str}")
+        return
+
+    registrations = registry.get_hooks(point)
+    if not registrations:
+        print(f"[hooks] No hooks registered for {point_str}")
+        return
+
+    for reg in registrations:
+        print(f"[hooks] Running {reg.name} for {point_str}...")
+        result = subprocess.run(reg.command, shell=True, capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"[hooks] {reg.name} failed: {result.stderr.strip()}")
+        else:
+            print(f"[hooks] {reg.name} OK")
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Sisyphus Autoflow Hooks CLI")
+    sub = parser.add_subparsers(dest="command")
+
+    run_p = sub.add_parser("run")
+    run_p.add_argument("point", help="Hook point name (e.g. wave1:parse:after)")
+    run_p.add_argument("--project-root", default=".")
+
+    args = parser.parse_args()
+
+    if args.command == "run":
+        run_hook(args.point, args.project_root)
