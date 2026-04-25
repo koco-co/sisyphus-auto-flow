@@ -23,7 +23,9 @@ typecheck:
 ci: lint typecheck test
 
 release:
-	@echo "1. Bump version in pyproject.toml + PLUGIN.md"
-	@echo "2. git tag v$$(python3 -c 'import tomllib; print(tomllib.load(open(\"pyproject.toml\",\"rb\"))[\"project\"][\"version\"])')"
+	@echo "=== 发布流程 ==="
+	@echo "1. 确认 pyproject.toml 版本号已更新"
+	@python3 -c "import tomllib; v=tomllib.load(open('pyproject.toml','rb'))['project']['version']; print(f'  当前版本: {v}')"
+	@echo "2. git tag v$$(python3 -c \"import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])\")"
 	@echo "3. git push origin main --tags"
-	@echo "4. claude plugins publish (if registry supports)"
+	@echo "4. 在 GitHub 上创建 Release"

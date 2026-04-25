@@ -1,8 +1,8 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/Sisyphus--AutoFlow-1.2-7C3AED?style=for-the-badge&logoColor=white">
-  <img alt="Sisyphus-AutoFlow" src="https://img.shields.io/badge/Sisyphus--AutoFlow-1.2-7C3AED?style=for-the-badge&logoColor=white">
+  <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/Sisyphus--AutoFlow-1.3-7C3AED?style=for-the-badge&logoColor=white">
+  <img alt="Sisyphus-AutoFlow" src="https://img.shields.io/badge/Sisyphus--AutoFlow-1.3-7C3AED?style=for-the-badge&logoColor=white">
 </picture>
 
 # <img src="https://em-content.zobj.net/source/apple/391/test-tube_1f9ea.png" width="32" /> Sisyphus-AutoFlow
@@ -25,7 +25,7 @@
 [![Claude Code](https://img.shields.io/badge/Claude_Code-Plugin-7C3AED?style=flat-square&logo=anthropic&logoColor=white)](https://claude.ai/code)
 [![pytest](https://img.shields.io/badge/pytest-Framework-0A9EDC?style=flat-square&logo=pytest&logoColor=white)](https://pytest.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](./LICENSE)
-[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg?style=flat-square)](./pyproject.toml)
+[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg?style=flat-square)](./pyproject.toml)
 
 <br />
 
@@ -497,8 +497,7 @@ make fmt        # 代码格式化
 |------|---------|
 | **v1.0** | HAR 解析 · 4 波编排 · L1-L5 断言 · DB 验证 · 检查点恢复 · 外部通知 |
 | **v1.1** | 旧项目适配 · 验证透明度 · 验收命令优化 · 路径修复 · 测试类型选择 |
-| **v1.2**（当前） | 智能项目分类 · 7 维度深度扫描 · 行业画像与 AI 调研 · 方案推荐 · 配置验证 · 全流程行业感知 |
-| **v1.3**（当前） | 共享模块提取 · Hook 系统 · 偏好学习 · 格式检查器 · Pydantic 校验 · 测试覆盖 78% |
+| **v1.3**（当前） | 跨项目优化 · Hook 系统 · 偏好学习 · 格式检查器 · 测试覆盖 78% |
 | v1.4 | 多语言后端支持（TypeScript · Go · Python 后端） |
 | v1.4 | OpenAPI / Swagger spec 作为补充输入源 |
 | v2.0 | UI 自动化集成（Playwright）· 性能测试 |
