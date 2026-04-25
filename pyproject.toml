@@ -23,6 +23,7 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-v --cov=scripts --cov-report=term-missing --strict-markers"
+norecursedirs = ["fixtures"]
 markers = [
     "interface: interface/API tests",
     "scenario: scenario tests",
@@ -39,3 +40,9 @@ select = ["E", "F", "I", "N", "UP", "B", "SIM", "TCH"]
 [tool.pyright]
 pythonVersion = "3.12"
 typeCheckingMode = "basic"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "pytest-cov>=7.1.0",
+]
